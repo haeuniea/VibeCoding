@@ -13,17 +13,4 @@ Not a git repo, no root-level package manager or tests — each subfolder is sel
 
 Read the relevant subfolder's `CLAUDE.md` for setup/run commands and version-specific architecture details before working in it.
 
-## 커밋 규칙
-
-- Conventional Commits 형식 (feat:, fix:, docs: 등)
-- 커밋 메시지는 한글로 작성
-- 제목은 50자 이내
-
-## 브랜치 규칙
-
-- feature/, fix/, hitfix/ 접두사 사용
-- main 직접 커밋 금지
-
-## PR 규칙
-- PR 설명에 관련 이슈 번호 포함
-- 테스트 계획 필수 포함
+커밋/브랜치/PR 규칙은 저장소 루트의 `CLAUDE.md` 참고.
