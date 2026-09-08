@@ -36,6 +36,10 @@ python -m uvicorn app:app --reload
 - `app.py`: FastAPI 서버. `GET /`는 `static/index.html`을 서빙하고, `/api/recognize-ingredients`(1단계), `/api/recommend-recipes`(2단계), `/api/signup`·`/api/login`·`/api/recipes/save`·`/api/recipes/saved`·`/api/recipes/saved/{id}`(3단계) 엔드포인트를 제공한다. 인증이 필요한 엔드포인트는 `Authorization: Bearer <token>` 헤더를 요구한다.
 - `static/index.html`: 이미지 업로드 → 재료 인식/수정 → 레시피 추천 → 상세 보기 → 저장까지 이어지는 단일 페이지 프론트엔드. 순수 HTML/JS, 별도 빌드 도구 없음. 토큰은 `localStorage`에 보관.
 
-참고: `black-forest-labs/flux.2-klein-4b`는 이미지 인식이 아니라 이미지 생성/편집 모델이라 이 프로젝트 용도에 맞지 않아 사용하지 않는다.
 
 공통 규칙(커밋/브랜치/PR)은 상위 `VibeCoding/CLAUDE.md`를 따른다.
+
+
+OpenRouter API를 이용해서 실제 AI 모델이 이미지를 인식하고 레시피를 생성하게 해줘.
+
+매번 실행할 때 마다 API가 정확히 작동했는지, AI 모델이 문제없이 실행되었는지를 파악하고, 문제가 있다면 어떤 문제가 있는지를 보고해.
