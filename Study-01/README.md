@@ -5,6 +5,8 @@ MNIST로 학습한 신경망(MLPClassifier)이 마우스로 그린 숫자를 인
 - `desktop_version/` — Tkinter GUI, 서버 없이 로컬에서 실행
 - `web_version/` — Flask 백엔드 + HTML5 캔버스 프론트엔드, 로컬 웹 서버로 실행
 
+![스크린샷](screenshot.png)
+
 ## 실행 방법
 
 두 버전 모두 실행 전 모델 학습이 필요하다 (`model.pkl` 생성, MNIST 최초 다운로드 시 인터넷 필요, 약 1분 소요).
