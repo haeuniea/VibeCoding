@@ -15,8 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 브랜치 규칙
 
-- Study-03부터는 프로젝트마다 `feature/Study-03`처럼 `feature/<프로젝트명>` 브랜치를 만들어 작업하고, 완료되면 PR로 main에 merge한다
-- main 직접 커밋 금지 (Study-03부터 적용. Study-01, Study-02는 기존 방식대로 main 직접 커밋으로 진행되었음)
+- 프로젝트마다 `feature/Study-03`처럼 `feature/<프로젝트명>` 브랜치를 만들어 작업하고, 완료되면 PR로 main에 merge한다
+- main 직접 커밋 금지
 - 그 외 브랜치는 feature/, fix/, hitfix/ 접두사 사용
 
 ## PR 규칙
