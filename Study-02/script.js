@@ -3,6 +3,8 @@ const categorySelect = document.getElementById('category-select');
 const addBtn = document.getElementById('add-btn');
 const todoList = document.getElementById('todo-list');
 const filterArea = document.getElementById('filter-area');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
 
 const STORAGE_KEY = 'todos';
 
@@ -26,6 +28,10 @@ function saveTodos() {
 let todos = loadTodos();
 let currentFilter = '전체';
 
+function findTodo(id) {
+  return todos.find((t) => t.id === id);
+}
+
 function addTodo() {
   const title = todoInput.value.trim();
   if (!title) return;
@@ -44,7 +50,7 @@ function addTodo() {
 }
 
 function editTodo(id) {
-  const todo = todos.find((t) => t.id === id);
+  const todo = findTodo(id);
   if (!todo) return;
 
   const newTitle = prompt('할 일 수정', todo.title);
@@ -66,12 +72,21 @@ function deleteTodo(id) {
 }
 
 function toggleComplete(id) {
-  const todo = todos.find((t) => t.id === id);
+  const todo = findTodo(id);
   if (!todo) return;
 
   todo.completed = !todo.completed;
   saveTodos();
   render();
+}
+
+function updateProgress() {
+  const total = todos.length;
+  const completed = todos.filter((t) => t.completed).length;
+  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  progressFill.style.width = `${percent}%`;
+  progressText.textContent = `${completed} / ${total} 완료`;
 }
 
 function render() {
@@ -82,8 +97,18 @@ function render() {
       ? todos
       : todos.filter((t) => t.category === currentFilter);
 
+  if (filtered.length === 0) {
+    const emptyMessage = document.createElement('li');
+    emptyMessage.className = 'empty-message';
+    emptyMessage.textContent = '할 일이 없습니다';
+    todoList.appendChild(emptyMessage);
+    updateProgress();
+    return;
+  }
+
   filtered.forEach((todo) => {
     const li = document.createElement('li');
+    li.classList.add(todo.category);
     if (todo.completed) li.classList.add('completed');
 
     const checkbox = document.createElement('input');
@@ -114,9 +139,15 @@ function render() {
     li.appendChild(deleteBtn);
     todoList.appendChild(li);
   });
+
+  updateProgress();
 }
 
 addBtn.addEventListener('click', addTodo);
+
+todoInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') addTodo();
+});
 
 filterArea.addEventListener('click', (event) => {
   const btn = event.target.closest('.filter-btn');
