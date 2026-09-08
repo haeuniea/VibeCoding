@@ -2,11 +2,14 @@
 
 개인용 할 일 관리 웹 앱. 서버, 회원가입, 빌드 도구 없이 `index.html`을 브라우저에서 바로 열어서 사용한다.
 
+- 루트(`index.html`) — 모바일 화면 중심의 기본 버전
+- `web_version/` — 사이드바 + 카드 그리드 레이아웃으로 데스크톱 전체 화면에 맞춘 버전 (기능·데이터·저장 방식은 동일)
+
 ![스크린샷](screenshot.png)
 
 ## 실행 방법
 
-`index.html`을 더블클릭하거나 브라우저로 열면 된다.
+각 버전 폴더의 `index.html`을 더블클릭하거나 브라우저로 열면 된다 (예: `web_version/index.html`).
 
 ## 기능
 
@@ -21,10 +24,11 @@
 ## 파일 구조
 
 ```
-index.html   마크업
-style.css    스타일
-script.js    로직 (CRUD, localStorage 연동, 렌더링)
-PRD.md       제품 요구사항 문서
+index.html          마크업 (기본 버전)
+style.css           스타일 (기본 버전)
+script.js           로직 (CRUD, localStorage 연동, 렌더링)
+web_version/         데스크톱 전체 화면 최적화 버전 (index.html/style.css/script.js)
+PRD.md               제품 요구사항 문서
 ```
 
 ## 데이터 모델
