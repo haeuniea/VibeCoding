@@ -33,9 +33,31 @@
   #recipe-detail h3 { margin-top: 0; }
   #recipe-detail .missing { color: #c0392b; font-size: 13px; }
   #back-to-list { margin-bottom: 12px; }
+  #auth-section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
+  #auth-section input { display: block; width: 100%; box-sizing: border-box; margin-bottom: 6px; padding: 6px; }
+  #auth-error { color: #c0392b; font-size: 13px; }
+  .saved-recipe-item {
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;
+  }
+  .saved-recipe-item span { cursor: pointer; }
 </style>
 </head>
 <body>
+  <div id="auth-section">
+    <div id="auth-logged-out">
+      <input type="email" id="auth-email" placeholder="이메일">
+      <input type="password" id="auth-password" placeholder="비밀번호">
+      <button id="signup-btn">회원가입</button>
+      <button id="login-btn">로그인</button>
+      <div id="auth-error"></div>
+    </div>
+    <div id="auth-logged-in" style="display:none">
+      <span id="auth-current-email"></span>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+  </div>
+
   <h1>냉장고 사진으로 재료 인식하기</h1>
 
   <div id="dropzone">사진을 클릭하거나 여기로 드래그하세요</div>
@@ -68,7 +90,14 @@
     <p><strong>사용 재료:</strong> <span id="detail-used"></span></p>
     <p class="missing"><strong>추가로 필요한 재료:</strong> <span id="detail-missing"></span></p>
     <ol id="detail-steps"></ol>
+    <button id="save-recipe-btn">이 레시피 저장</button>
+    <div id="save-status"></div>
   </div>
+
+  <hr>
+
+  <h1>내가 저장한 레시피</h1>
+  <div id="saved-recipes-list"></div>
 
   <script>
     const dropzone = document.getElementById('dropzone');
@@ -168,23 +197,24 @@
     const backToListBtn = document.getElementById('back-to-list');
 
     let currentRecipes = [];
+    let activeRecipe = null;
 
     function renderRecipeCards(recipes) {
       recipeListEl.innerHTML = '';
       recipeDetailEl.style.display = 'none';
       recipeListEl.style.display = 'block';
-      recipes.forEach((recipe, idx) => {
+      recipes.forEach((recipe) => {
         const card = document.createElement('div');
         card.className = 'recipe-card';
         const summary = recipe.used_ingredients.join(', ') || '재료 정보 없음';
         card.innerHTML = `<h3>${recipe.title}</h3><p>${summary}</p>`;
-        card.onclick = () => showRecipeDetail(idx);
+        card.onclick = () => showRecipeDetail(recipe);
         recipeListEl.appendChild(card);
       });
     }
 
-    function showRecipeDetail(idx) {
-      const recipe = currentRecipes[idx];
+    function showRecipeDetail(recipe) {
+      activeRecipe = recipe;
       document.getElementById('detail-title').textContent = recipe.title;
       document.getElementById('detail-time').textContent = recipe.estimated_time_minutes ?? '?';
       document.getElementById('detail-used').textContent = recipe.used_ingredients.join(', ') || '없음';
@@ -196,6 +226,7 @@
         li.textContent = step;
         stepsEl.appendChild(li);
       });
+      document.getElementById('save-status').textContent = '';
       recipeListEl.style.display = 'none';
       recipeDetailEl.style.display = 'block';
     }
@@ -237,6 +268,154 @@
         recommendBtn.disabled = currentIngredients.length === 0;
       }
     });
+
+    // --- 인증 (3단계) ---
+    const authLoggedOutEl = document.getElementById('auth-logged-out');
+    const authLoggedInEl = document.getElementById('auth-logged-in');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authErrorEl = document.getElementById('auth-error');
+    const authCurrentEmailEl = document.getElementById('auth-current-email');
+    const savedRecipesListEl = document.getElementById('saved-recipes-list');
+    const saveRecipeBtn = document.getElementById('save-recipe-btn');
+    const saveStatusEl = document.getElementById('save-status');
+
+    function getToken() {
+      try { return localStorage.getItem('token'); } catch { return null; }
+    }
+    function getStoredEmail() {
+      try { return localStorage.getItem('email'); } catch { return null; }
+    }
+    function setAuth(token, email) {
+      try {
+        localStorage.setItem('token', token);
+        localStorage.setItem('email', email);
+      } catch {}
+      renderAuthState();
+      loadSavedRecipes();
+    }
+    function clearAuth() {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('email');
+      } catch {}
+      renderAuthState();
+      savedRecipesListEl.innerHTML = '';
+    }
+
+    function renderAuthState() {
+      const token = getToken();
+      if (token) {
+        authLoggedOutEl.style.display = 'none';
+        authLoggedInEl.style.display = 'block';
+        authCurrentEmailEl.textContent = getStoredEmail() || '';
+      } else {
+        authLoggedOutEl.style.display = 'block';
+        authLoggedInEl.style.display = 'none';
+      }
+    }
+
+    async function submitAuth(path) {
+      authErrorEl.textContent = '';
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value;
+      if (!email || !password) {
+        authErrorEl.textContent = '이메일과 비밀번호를 입력해주세요.';
+        return;
+      }
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '요청에 실패했습니다.');
+        if (path === '/api/login') {
+          setAuth(data.token, data.email);
+          authPasswordInput.value = '';
+        } else {
+          authErrorEl.textContent = '가입 완료! 이제 로그인해주세요.';
+        }
+      } catch (err) {
+        authErrorEl.textContent = err.message;
+      }
+    }
+
+    document.getElementById('signup-btn').addEventListener('click', () => submitAuth('/api/signup'));
+    document.getElementById('login-btn').addEventListener('click', () => submitAuth('/api/login'));
+    document.getElementById('logout-btn').addEventListener('click', clearAuth);
+
+    // --- 레시피 저장 (3단계) ---
+    saveRecipeBtn.addEventListener('click', async () => {
+      if (!activeRecipe) return;
+      const token = getToken();
+      if (!token) {
+        saveStatusEl.textContent = '저장하려면 먼저 로그인해주세요.';
+        authEmailInput.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      saveStatusEl.textContent = '저장하는 중...';
+      try {
+        const res = await fetch('/api/recipes/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ recipe: activeRecipe }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '저장에 실패했습니다.');
+        saveStatusEl.textContent = '저장했어요!';
+        loadSavedRecipes();
+      } catch (err) {
+        saveStatusEl.textContent = err.message;
+      }
+    });
+
+    async function loadSavedRecipes() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch('/api/recipes/saved', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '목록을 불러오지 못했습니다.');
+        renderSavedRecipes(data.saved_recipes || []);
+      } catch (err) {
+        savedRecipesListEl.textContent = err.message;
+      }
+    }
+
+    function renderSavedRecipes(recipes) {
+      savedRecipesListEl.innerHTML = '';
+      if (recipes.length === 0) {
+        savedRecipesListEl.textContent = '아직 저장한 레시피가 없어요.';
+        return;
+      }
+      recipes.forEach((recipe) => {
+        const item = document.createElement('div');
+        item.className = 'saved-recipe-item';
+        const title = document.createElement('span');
+        title.textContent = recipe.title;
+        title.onclick = () => showRecipeDetail(recipe);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '삭제';
+        deleteBtn.onclick = async () => {
+          const token = getToken();
+          await fetch(`/api/recipes/saved/${recipe.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          loadSavedRecipes();
+        };
+        item.appendChild(title);
+        item.appendChild(deleteBtn);
+        savedRecipesListEl.appendChild(item);
+      });
+    }
+
+    renderAuthState();
+    loadSavedRecipes();
   </script>
 </body>
 </html>

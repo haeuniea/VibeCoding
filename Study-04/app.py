@@ -1,8 +1,9 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import auth
 from recipe import recommend_recipes
 from vision import recognize_ingredients
 
@@ -12,8 +13,29 @@ MAX_IMAGE_BYTES = 10 * 1024 * 1024
 class RecommendRecipesRequest(BaseModel):
     ingredients: list[str]
 
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+
+class SaveRecipeRequest(BaseModel):
+    recipe: dict
+
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+auth.init_db()
+
+
+def require_user(authorization: str | None = Header(default=None)) -> int:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    token = authorization.removeprefix("Bearer ").strip()
+    user_id = auth.get_user_id_from_token(token)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    return user_id
 
 
 @app.get("/")
@@ -54,3 +76,45 @@ async def recommend_recipes_endpoint(body: RecommendRecipesRequest):
         )
 
     return {"recipes": recipes}
+
+
+@app.post("/api/signup")
+async def signup(body: AuthRequest):
+    email = body.email.strip().lower()
+    if not email or not body.password:
+        return JSONResponse(status_code=400, content={"error": "이메일과 비밀번호를 입력해주세요."})
+    if auth.email_exists(email):
+        return JSONResponse(status_code=409, content={"error": "이미 가입된 이메일입니다."})
+    auth.create_user(email, body.password)
+    return JSONResponse(status_code=201, content={"message": "가입이 완료됐어요."})
+
+
+@app.post("/api/login")
+async def login(body: AuthRequest):
+    email = body.email.strip().lower()
+    user_id = auth.authenticate_user(email, body.password)
+    if user_id is None:
+        return JSONResponse(status_code=401, content={"error": "이메일 또는 비밀번호가 올바르지 않습니다."})
+    token = auth.create_session(user_id)
+    return {"token": token, "email": email}
+
+
+@app.post("/api/recipes/save", status_code=201)
+async def save_recipe_endpoint(body: SaveRecipeRequest, authorization: str | None = Header(default=None)):
+    user_id = require_user(authorization)
+    saved = auth.save_recipe(user_id, body.recipe)
+    return {"saved_recipe": saved}
+
+
+@app.get("/api/recipes/saved")
+async def list_saved_recipes_endpoint(authorization: str | None = Header(default=None)):
+    user_id = require_user(authorization)
+    return {"saved_recipes": auth.list_saved_recipes(user_id)}
+
+
+@app.delete("/api/recipes/saved/{recipe_id}", status_code=204)
+async def delete_saved_recipe_endpoint(recipe_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_user(authorization)
+    if not auth.delete_saved_recipe(user_id, recipe_id):
+        raise HTTPException(status_code=404, detail="레시피를 찾을 수 없습니다.")
+    return None

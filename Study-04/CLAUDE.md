@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-냉장고 사진에서 재료를 인식하고 레시피를 추천하는 웹 앱. `PRD_step1.md`(재료 인식) → `PRD_step2.md`(레시피 생성) → `PRD_step3.md`(사용자 프로필/저장) 순으로 단계별 구현한다. 현재 1단계(이미지 업로드 → 재료 인식)까지 구현됨.
+냉장고 사진에서 재료를 인식하고 레시피를 추천하는 웹 앱. `PRD_step1.md`(재료 인식) → `PRD_step2.md`(레시피 생성) → `PRD_step3.md`(사용자 프로필/저장) 3단계 모두 구현 완료.
 
 ## 실행 방법
 
@@ -31,8 +31,10 @@ python -m uvicorn app:app --reload
 - `config.py`: 환경변수 로딩 (모든 API 키 접근은 여기를 거친다)
 - `main.py`: OpenRouter API를 직접 호출해보는 실험용 스크립트. `chat(prompt)`, `describe_image(image_url, prompt)`
 - `vision.py`: 1단계 핵심 로직. `recognize_ingredients(image_bytes, content_type)`가 이미지를 base64 data URI로 변환해 모델에 보내고, JSON 배열 형태의 재료 목록을 파싱해 반환한다. 429는 최대 2회 재시도한다.
-- `app.py`: FastAPI 서버. `GET /`는 `static/index.html`을 서빙하고, `POST /api/recognize-ingredients`가 업로드된 이미지를 받아 `vision.recognize_ingredients`를 호출한다.
-- `static/index.html`: 이미지 업로드(드래그앤드롭) + 인식된 재료 목록을 태그 형태로 보여주고 직접 추가/삭제할 수 있는 프론트엔드. 순수 HTML/JS, 별도 빌드 도구 없음.
+- `recipe.py`: 2단계 핵심 로직. `recommend_recipes(ingredients)`가 재료 목록을 프롬프트로 만들어 모델에 보내고, `title/used_ingredients/missing_ingredients/steps/estimated_time_minutes` 필드를 가진 레시피 배열로 파싱한다.
+- `auth.py`: 3단계 핵심 로직. SQLite(`app.db`, gitignore 처리됨)에 회원/세션/저장된 레시피를 저장한다. 비밀번호는 `pbkdf2_hmac`로 솔트와 함께 해싱, 로그인 시 랜덤 토큰을 발급해 `sessions` 테이블에 저장한다(만료 없음, 학습용 단순 구현).
+- `app.py`: FastAPI 서버. `GET /`는 `static/index.html`을 서빙하고, `/api/recognize-ingredients`(1단계), `/api/recommend-recipes`(2단계), `/api/signup`·`/api/login`·`/api/recipes/save`·`/api/recipes/saved`·`/api/recipes/saved/{id}`(3단계) 엔드포인트를 제공한다. 인증이 필요한 엔드포인트는 `Authorization: Bearer <token>` 헤더를 요구한다.
+- `static/index.html`: 이미지 업로드 → 재료 인식/수정 → 레시피 추천 → 상세 보기 → 저장까지 이어지는 단일 페이지 프론트엔드. 순수 HTML/JS, 별도 빌드 도구 없음. 토큰은 `localStorage`에 보관.
 
 참고: `black-forest-labs/flux.2-klein-4b`는 이미지 인식이 아니라 이미지 생성/편집 모델이라 이 프로젝트 용도에 맞지 않아 사용하지 않는다.
 
