@@ -22,6 +22,17 @@
   }
   #ingredients li button { border: none; background: none; cursor: pointer; padding: 0; font-size: 14px; }
   #add-ingredient { margin-top: 8px; padding: 6px; width: 100%; box-sizing: border-box; }
+  hr { margin: 24px 0; border: none; border-top: 1px solid #ddd; }
+  .recipe-card {
+    border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer;
+  }
+  .recipe-card:hover { background: #f7f7f7; }
+  .recipe-card h3 { margin: 0 0 4px 0; font-size: 16px; }
+  .recipe-card p { margin: 0; font-size: 13px; color: #666; }
+  #recipe-detail { display: none; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
+  #recipe-detail h3 { margin-top: 0; }
+  #recipe-detail .missing { color: #c0392b; font-size: 13px; }
+  #back-to-list { margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -40,6 +51,24 @@
 
   <ul id="ingredients"></ul>
   <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
+
+  <hr>
+
+  <h1>레시피 추천</h1>
+  <button id="recommend-btn" disabled>레시피 추천받기</button>
+  <div id="recipe-status"></div>
+  <div id="recipe-error"></div>
+
+  <div id="recipe-list"></div>
+
+  <div id="recipe-detail">
+    <button id="back-to-list">← 목록으로</button>
+    <h3 id="detail-title"></h3>
+    <p><strong>예상 조리 시간:</strong> <span id="detail-time"></span>분</p>
+    <p><strong>사용 재료:</strong> <span id="detail-used"></span></p>
+    <p class="missing"><strong>추가로 필요한 재료:</strong> <span id="detail-missing"></span></p>
+    <ol id="detail-steps"></ol>
+  </div>
 
   <script>
     const dropzone = document.getElementById('dropzone');
@@ -88,6 +117,7 @@
         ingredientsEl.appendChild(li);
       });
       ingredientsEl.dataset.list = JSON.stringify(list);
+      recommendBtn.disabled = list.length === 0;
     }
 
     let currentIngredients = [];
@@ -127,6 +157,84 @@
         statusEl.textContent = '';
       } finally {
         recognizeBtn.disabled = false;
+      }
+    });
+
+    const recommendBtn = document.getElementById('recommend-btn');
+    const recipeStatusEl = document.getElementById('recipe-status');
+    const recipeErrorEl = document.getElementById('recipe-error');
+    const recipeListEl = document.getElementById('recipe-list');
+    const recipeDetailEl = document.getElementById('recipe-detail');
+    const backToListBtn = document.getElementById('back-to-list');
+
+    let currentRecipes = [];
+
+    function renderRecipeCards(recipes) {
+      recipeListEl.innerHTML = '';
+      recipeDetailEl.style.display = 'none';
+      recipeListEl.style.display = 'block';
+      recipes.forEach((recipe, idx) => {
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+        const summary = recipe.used_ingredients.join(', ') || '재료 정보 없음';
+        card.innerHTML = `<h3>${recipe.title}</h3><p>${summary}</p>`;
+        card.onclick = () => showRecipeDetail(idx);
+        recipeListEl.appendChild(card);
+      });
+    }
+
+    function showRecipeDetail(idx) {
+      const recipe = currentRecipes[idx];
+      document.getElementById('detail-title').textContent = recipe.title;
+      document.getElementById('detail-time').textContent = recipe.estimated_time_minutes ?? '?';
+      document.getElementById('detail-used').textContent = recipe.used_ingredients.join(', ') || '없음';
+      document.getElementById('detail-missing').textContent = recipe.missing_ingredients.join(', ') || '없음';
+      const stepsEl = document.getElementById('detail-steps');
+      stepsEl.innerHTML = '';
+      recipe.steps.forEach((step) => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        stepsEl.appendChild(li);
+      });
+      recipeListEl.style.display = 'none';
+      recipeDetailEl.style.display = 'block';
+    }
+
+    backToListBtn.addEventListener('click', () => {
+      recipeDetailEl.style.display = 'none';
+      recipeListEl.style.display = 'block';
+    });
+
+    recommendBtn.addEventListener('click', async () => {
+      if (currentIngredients.length === 0) return;
+      recipeErrorEl.textContent = '';
+      recipeStatusEl.textContent = '레시피를 만드는 중...';
+      recommendBtn.disabled = true;
+      recipeListEl.innerHTML = '';
+      recipeDetailEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/recommend-recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ingredients: currentIngredients }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '레시피 생성에 실패했어요. 다시 시도해주세요.');
+        }
+        currentRecipes = data.recipes || [];
+        if (currentRecipes.length === 0) {
+          recipeStatusEl.textContent = '레시피를 만들지 못했어요. 다시 시도해주세요.';
+        } else {
+          recipeStatusEl.textContent = `${currentRecipes.length}개의 레시피를 추천받았어요.`;
+        }
+        renderRecipeCards(currentRecipes);
+      } catch (err) {
+        recipeErrorEl.textContent = err.message;
+        recipeStatusEl.textContent = '';
+      } finally {
+        recommendBtn.disabled = currentIngredients.length === 0;
       }
     });
   </script>
