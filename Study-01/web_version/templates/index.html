@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>손글씨 숫자 인식</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin-top: 40px; }
+  canvas { border: 1px solid #888; cursor: crosshair; touch-action: none; }
+  #result { font-size: 20px; margin: 16px 0; }
+  button { font-size: 14px; padding: 8px 16px; margin: 0 6px; }
+</style>
+</head>
+<body>
+  <h1>손글씨 숫자 인식 (웹)</h1>
+  <canvas id="canvas" width="280" height="280"></canvas>
+  <div id="result">숫자를 그리고 [인식] 버튼을 누르세요</div>
+  <button id="predictBtn">인식</button>
+  <button id="clearBtn">지우기</button>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let lastX = null, lastY = null;
+
+function fillBlack() {
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+fillBlack();
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const point = e.touches ? e.touches[0] : e;
+  return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+}
+
+function startDraw(e) {
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+  e.preventDefault();
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  lastX = p.x; lastY = p.y;
+  e.preventDefault();
+}
+
+function stopDraw() { drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+canvas.addEventListener('touchstart', startDraw);
+canvas.addEventListener('touchmove', draw);
+canvas.addEventListener('touchend', stopDraw);
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  fillBlack();
+  document.getElementById('result').textContent = '숫자를 그리고 [인식] 버튼을 누르세요';
+});
+
+document.getElementById('predictBtn').addEventListener('click', async () => {
+  const dataUrl = canvas.toDataURL('image/png');
+  const res = await fetch('/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: dataUrl }),
+  });
+  const resultEl = document.getElementById('result');
+  if (!res.ok) {
+    resultEl.textContent = '먼저 숫자를 그려주세요';
+    return;
+  }
+  const data = await res.json();
+  resultEl.textContent = `인식 결과: ${data.digit}  (확신도 ${data.confidence.toFixed(1)}%)`;
+});
+</script>
+</body>
+</html>
