@@ -2,8 +2,10 @@ const todoInput = document.getElementById('todo-input');
 const categorySelect = document.getElementById('category-select');
 const addBtn = document.getElementById('add-btn');
 const todoList = document.getElementById('todo-list');
+const filterArea = document.getElementById('filter-area');
 
 let todos = [];
+let currentFilter = '전체';
 
 function addTodo() {
   const title = todoInput.value.trim();
@@ -41,14 +43,38 @@ function deleteTodo(id) {
   render();
 }
 
+function toggleComplete(id) {
+  const todo = todos.find((t) => t.id === id);
+  if (!todo) return;
+
+  todo.completed = !todo.completed;
+  render();
+}
+
 function render() {
   todoList.innerHTML = '';
 
-  todos.forEach((todo) => {
+  const filtered =
+    currentFilter === '전체'
+      ? todos
+      : todos.filter((t) => t.category === currentFilter);
+
+  filtered.forEach((todo) => {
     const li = document.createElement('li');
+    if (todo.completed) li.classList.add('completed');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = todo.completed;
+    checkbox.addEventListener('change', () => toggleComplete(todo.id));
+
+    const categoryTag = document.createElement('span');
+    categoryTag.textContent = todo.category;
+    categoryTag.className = `category-tag ${todo.category}`;
 
     const titleSpan = document.createElement('span');
-    titleSpan.textContent = `[${todo.category}] ${todo.title}`;
+    titleSpan.textContent = todo.title;
+    titleSpan.className = 'todo-title';
 
     const editBtn = document.createElement('button');
     editBtn.textContent = '수정';
@@ -58,6 +84,8 @@ function render() {
     deleteBtn.textContent = '삭제';
     deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
 
+    li.appendChild(checkbox);
+    li.appendChild(categoryTag);
     li.appendChild(titleSpan);
     li.appendChild(editBtn);
     li.appendChild(deleteBtn);
@@ -66,3 +94,16 @@ function render() {
 }
 
 addBtn.addEventListener('click', addTodo);
+
+filterArea.addEventListener('click', (event) => {
+  const btn = event.target.closest('.filter-btn');
+  if (!btn) return;
+
+  currentFilter = btn.dataset.category;
+
+  filterArea
+    .querySelectorAll('.filter-btn')
+    .forEach((b) => b.classList.toggle('active', b === btn));
+
+  render();
+});

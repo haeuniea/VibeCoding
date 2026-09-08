@@ -25,6 +25,25 @@ body {
   flex: 1;
 }
 
+.filter-area {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
 .list-area {
   margin-bottom: 24px;
 }
@@ -33,6 +52,42 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+#todo-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#todo-list li .todo-title {
+  flex: 1;
+}
+
+#todo-list li.completed .todo-title {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.category-tag {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.category-tag.업무 {
+  background: #3f51b5;
+}
+
+.category-tag.개인 {
+  background: #009688;
+}
+
+.category-tag.공부 {
+  background: #ff9800;
 }
 
 .progress-area {
