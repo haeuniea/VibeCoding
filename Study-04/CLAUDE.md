@@ -4,14 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Study-04는 초기 단계로, OpenRouter API 호출을 위한 최소 스캐폴딩만 존재한다.
+냉장고 사진에서 재료를 인식하고 레시피를 추천하는 웹 앱. `PRD_step1.md`(재료 인식) → `PRD_step2.md`(레시피 생성) → `PRD_step3.md`(사용자 프로필/저장) 순으로 단계별 구현한다. 현재 1단계(이미지 업로드 → 재료 인식)까지 구현됨.
 
 ## 실행 방법
 
 ```
 pip install -r requirements.txt
-python main.py
+python -m uvicorn app:app --reload
 ```
+브라우저에서 http://127.0.0.1:8000 접속.
+
+스크립트로 개별 함수를 테스트하려면 `python main.py`.
 
 ## 환경 변수
 
@@ -26,8 +29,11 @@ python main.py
 ## 구조
 
 - `config.py`: 환경변수 로딩 (모든 API 키 접근은 여기를 거친다)
-- `main.py`: OpenRouter(`https://openrouter.ai/api/v1`)에 OpenAI SDK로 호출하는 예제. `chat(prompt)`는 텍스트 질의, `describe_image(image_url, prompt)`는 이미지 인식/설명을 담당한다.
+- `main.py`: OpenRouter API를 직접 호출해보는 실험용 스크립트. `chat(prompt)`, `describe_image(image_url, prompt)`
+- `vision.py`: 1단계 핵심 로직. `recognize_ingredients(image_bytes, content_type)`가 이미지를 base64 data URI로 변환해 모델에 보내고, JSON 배열 형태의 재료 목록을 파싱해 반환한다. 429는 최대 2회 재시도한다.
+- `app.py`: FastAPI 서버. `GET /`는 `static/index.html`을 서빙하고, `POST /api/recognize-ingredients`가 업로드된 이미지를 받아 `vision.recognize_ingredients`를 호출한다.
+- `static/index.html`: 이미지 업로드(드래그앤드롭) + 인식된 재료 목록을 태그 형태로 보여주고 직접 추가/삭제할 수 있는 프론트엔드. 순수 HTML/JS, 별도 빌드 도구 없음.
 
 참고: `black-forest-labs/flux.2-klein-4b`는 이미지 인식이 아니라 이미지 생성/편집 모델이라 이 프로젝트 용도에 맞지 않아 사용하지 않는다.
 
-프로젝트 목적과 실제 기능은 아직 정해지지 않았으며, 코드가 추가되면 이 문서를 갱신해야 한다. 공통 규칙(커밋/브랜치/PR)은 상위 `VibeCoding/CLAUDE.md`를 따른다.
+공통 규칙(커밋/브랜치/PR)은 상위 `VibeCoding/CLAUDE.md`를 따른다.

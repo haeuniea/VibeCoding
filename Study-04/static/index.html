@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>냉장고 재료 인식</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; }
+  h1 { font-size: 20px; }
+  #dropzone {
+    border: 2px dashed #999; border-radius: 8px; padding: 24px; text-align: center;
+    color: #666; cursor: pointer; margin-bottom: 16px;
+  }
+  #dropzone.drag { border-color: #333; color: #333; }
+  #preview { max-width: 100%; max-height: 240px; display: none; margin-bottom: 16px; border-radius: 8px; }
+  button { padding: 8px 16px; cursor: pointer; }
+  #status { margin: 12px 0; color: #666; }
+  #error { margin: 12px 0; color: #c0392b; }
+  #ingredients { list-style: none; padding: 0; }
+  #ingredients li {
+    display: inline-flex; align-items: center; gap: 6px; background: #eee; border-radius: 16px;
+    padding: 4px 10px; margin: 4px; font-size: 14px;
+  }
+  #ingredients li button { border: none; background: none; cursor: pointer; padding: 0; font-size: 14px; }
+  #add-ingredient { margin-top: 8px; padding: 6px; width: 100%; box-sizing: border-box; }
+</style>
+</head>
+<body>
+  <h1>냉장고 사진으로 재료 인식하기</h1>
+
+  <div id="dropzone">사진을 클릭하거나 여기로 드래그하세요</div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <img id="preview" alt="미리보기">
+
+  <div>
+    <button id="recognize-btn" disabled>재료 인식하기</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="error"></div>
+
+  <ul id="ingredients"></ul>
+  <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const recognizeBtn = document.getElementById('recognize-btn');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const ingredientsEl = document.getElementById('ingredients');
+    const addIngredientInput = document.getElementById('add-ingredient');
+
+    let selectedFile = null;
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+      if (e.dataTransfer.files.length > 0) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      selectedFile = file;
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      recognizeBtn.disabled = false;
+      errorEl.textContent = '';
+    }
+
+    function renderIngredients(list) {
+      ingredientsEl.innerHTML = '';
+      list.forEach((name, idx) => {
+        const li = document.createElement('li');
+        li.textContent = name + ' ';
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '×';
+        removeBtn.onclick = () => {
+          list.splice(idx, 1);
+          renderIngredients(list);
+        };
+        li.appendChild(removeBtn);
+        ingredientsEl.appendChild(li);
+      });
+      ingredientsEl.dataset.list = JSON.stringify(list);
+    }
+
+    let currentIngredients = [];
+
+    addIngredientInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && addIngredientInput.value.trim()) {
+        currentIngredients.push(addIngredientInput.value.trim());
+        renderIngredients(currentIngredients);
+        addIngredientInput.value = '';
+      }
+    });
+
+    recognizeBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      errorEl.textContent = '';
+      statusEl.textContent = '인식하는 중...';
+      recognizeBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      try {
+        const res = await fetch('/api/recognize-ingredients', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '인식에 실패했습니다.');
+        }
+        currentIngredients = data.ingredients || [];
+        if (currentIngredients.length === 0) {
+          statusEl.textContent = '재료를 인식하지 못했어요. 다시 시도하거나 직접 입력해주세요.';
+        } else {
+          statusEl.textContent = '인식 완료. 목록을 확인하고 필요하면 수정하세요.';
+        }
+        renderIngredients(currentIngredients);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        statusEl.textContent = '';
+      } finally {
+        recognizeBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
