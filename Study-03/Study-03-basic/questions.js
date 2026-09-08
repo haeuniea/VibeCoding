@@ -456,4 +456,13 @@ const quizQuestions = [
         options: ["로마","피렌체","밀라노","베네치아"],
         correctAnswer: 2,
         explanation: "최후의 만찬은 밀라노의 산타 마리아 델레 그라치에 수도원에 있습니다."
+    },
+    {
+        id: 51,
+        category: "세계지리",
+        difficulty: "hard",
+        question: "낙차 기준으로 세계에서 가장 높은 폭포는?",
+        options: ["나이아가라 폭포","빅토리아 폭포","앙헬 폭포","이과수 폭포"],
+        correctAnswer: 2,
+        explanation: "앙헬 폭포(엔젤 폭포)는 베네수엘라에 위치하며 낙차 979m로 세계에서 가장 높은 폭포입니다."
     }];
