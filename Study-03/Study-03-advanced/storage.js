@@ -2,7 +2,8 @@
 const STORAGE_KEYS = {
     HISTORY: 'quizGameHistory',
     THEME: 'quizTheme',
-    SOUND: 'quizSoundEnabled'
+    SOUND: 'quizSoundEnabled',
+    STUDENT_NAME: 'quizStudentName'
 };
 
 class LocalDataManager {
@@ -70,5 +71,22 @@ class LocalDataManager {
     // 최근 N게임의 점수 목록 (오래된 순)
     getRecentScores(limit = 10) {
         return this.getGameHistory().slice(-limit).map(h => h.totalScore);
+    }
+
+    getStudentName() {
+        return localStorage.getItem(STORAGE_KEYS.STUDENT_NAME) || '';
+    }
+
+    setStudentName(name) {
+        localStorage.setItem(STORAGE_KEYS.STUDENT_NAME, name);
+    }
+
+    // 선생님 모드 리포트용 내보내기 스키마
+    exportHistory(studentName) {
+        return {
+            studentName,
+            exportedAt: new Date().toISOString(),
+            history: this.getGameHistory()
+        };
     }
 }

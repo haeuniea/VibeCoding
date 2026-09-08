@@ -1,0 +1,74 @@
+{
+  "studentName": "하늘",
+  "exportedAt": "2026-09-08T09:10:00.000Z",
+  "history": [
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 180,
+      "correctAnswers": 20,
+      "totalQuestions": 40,
+      "accuracy": 50,
+      "avgResponseTime": 12.5,
+      "longestStreak": 3,
+      "categoryScores": {
+        "한국사": { "correct": 6, "total": 10 },
+        "세계지리": { "correct": 4, "total": 10 },
+        "과학": { "correct": 5, "total": 10 },
+        "예술과 문화": { "correct": 5, "total": 10 }
+      },
+      "timestamp": "2026-08-04T10:00:00.000Z"
+    },
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 216,
+      "correctAnswers": 24,
+      "totalQuestions": 40,
+      "accuracy": 60,
+      "avgResponseTime": 11.0,
+      "longestStreak": 4,
+      "categoryScores": {
+        "한국사": { "correct": 7, "total": 10 },
+        "세계지리": { "correct": 6, "total": 10 },
+        "과학": { "correct": 5, "total": 10 },
+        "예술과 문화": { "correct": 6, "total": 10 }
+      },
+      "timestamp": "2026-08-15T14:00:00.000Z"
+    },
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 300,
+      "correctAnswers": 30,
+      "totalQuestions": 40,
+      "accuracy": 75,
+      "avgResponseTime": 9.0,
+      "longestStreak": 7,
+      "categoryScores": {
+        "한국사": { "correct": 8, "total": 10 },
+        "세계지리": { "correct": 7, "total": 10 },
+        "과학": { "correct": 7, "total": 10 },
+        "예술과 문화": { "correct": 8, "total": 10 }
+      },
+      "timestamp": "2026-08-27T16:00:00.000Z"
+    },
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 385,
+      "correctAnswers": 35,
+      "totalQuestions": 40,
+      "accuracy": 88,
+      "avgResponseTime": 7.5,
+      "longestStreak": 12,
+      "categoryScores": {
+        "한국사": { "correct": 9, "total": 10 },
+        "세계지리": { "correct": 8, "total": 10 },
+        "과학": { "correct": 9, "total": 10 },
+        "예술과 문화": { "correct": 9, "total": 10 }
+      },
+      "timestamp": "2026-09-06T13:00:00.000Z"
+    }
+  ]
+}

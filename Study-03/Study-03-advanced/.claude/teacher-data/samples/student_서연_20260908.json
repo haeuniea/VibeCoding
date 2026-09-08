@@ -1,0 +1,68 @@
+{
+  "studentName": "서연",
+  "exportedAt": "2026-09-08T09:05:00.000Z",
+  "history": [
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 280,
+      "correctAnswers": 28,
+      "totalQuestions": 40,
+      "accuracy": 70,
+      "avgResponseTime": 9.5,
+      "longestStreak": 6,
+      "categoryScores": {
+        "한국사": { "correct": 9, "total": 10 },
+        "세계지리": { "correct": 8, "total": 10 },
+        "과학": { "correct": 3, "total": 10 },
+        "예술과 문화": { "correct": 8, "total": 10 }
+      },
+      "timestamp": "2026-08-05T13:00:00.000Z"
+    },
+    {
+      "mode": "category",
+      "category": "한국사",
+      "totalScore": 88,
+      "correctAnswers": 8,
+      "totalQuestions": 10,
+      "accuracy": 80,
+      "avgResponseTime": 8.0,
+      "longestStreak": 5,
+      "categoryScores": {
+        "한국사": { "correct": 8, "total": 10 }
+      },
+      "timestamp": "2026-08-12T10:00:00.000Z"
+    },
+    {
+      "mode": "category",
+      "category": "과학",
+      "totalScore": 36,
+      "correctAnswers": 4,
+      "totalQuestions": 10,
+      "accuracy": 40,
+      "avgResponseTime": 11.2,
+      "longestStreak": 2,
+      "categoryScores": {
+        "과학": { "correct": 4, "total": 10 }
+      },
+      "timestamp": "2026-08-19T15:30:00.000Z"
+    },
+    {
+      "mode": "speed",
+      "category": null,
+      "totalScore": 130,
+      "correctAnswers": 13,
+      "totalQuestions": 20,
+      "accuracy": 65,
+      "avgResponseTime": 10.1,
+      "longestStreak": 4,
+      "categoryScores": {
+        "한국사": { "correct": 4, "total": 5 },
+        "세계지리": { "correct": 4, "total": 5 },
+        "과학": { "correct": 2, "total": 5 },
+        "예술과 문화": { "correct": 3, "total": 5 }
+      },
+      "timestamp": "2026-08-26T09:00:00.000Z"
+    }
+  ]
+}

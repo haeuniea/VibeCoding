@@ -8,6 +8,11 @@
 </head>
 <body>
     <div class="container">
+        <div class="app-toolbar">
+            <button id="soundToggleBtn" class="toolbar-btn" type="button" title="사운드 켜기/끄기" aria-pressed="true">🔊</button>
+            <button id="themeToggleBtn" class="toolbar-btn" type="button" title="다크모드 전환" aria-pressed="false">🌙</button>
+        </div>
+
         <!-- 시작 화면 -->
         <div id="startScreen" class="screen active">
             <div class="start-content">
@@ -18,6 +23,11 @@
                     <div class="category-chip">🌍 세계지리</div>
                     <div class="category-chip">🔬 과학</div>
                     <div class="category-chip">🎨 예술과 문화</div>
+                </div>
+
+                <div class="student-name-wrap">
+                    <label for="studentNameInput">이름</label>
+                    <input type="text" id="studentNameInput" placeholder="이름을 입력하세요" autocomplete="off">
                 </div>
 
                 <div class="mode-selection">
@@ -51,6 +61,73 @@
                 </div>
 
                 <button id="startBtn" class="btn btn-primary">게임 시작</button>
+
+                <div class="secondary-actions">
+                    <button id="leaderboardBtn" type="button" class="btn btn-ghost">🏆 리더보드</button>
+                    <button id="statsBtn" type="button" class="btn btn-ghost">📊 내 통계</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 리더보드 화면 -->
+        <div id="leaderboardScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">🏆 리더보드</h2>
+
+                <div class="leaderboard-filters">
+                    <div class="filter-group" id="periodFilter">
+                        <button type="button" class="filter-btn active" data-period="allTime">전체</button>
+                        <button type="button" class="filter-btn" data-period="weekly">이번 주</button>
+                        <button type="button" class="filter-btn" data-period="daily">오늘</button>
+                    </div>
+                    <select id="leaderboardCategoryFilter" aria-label="카테고리 필터">
+                        <option value="">전체 카테고리</option>
+                        <option value="한국사">🏛️ 한국사</option>
+                        <option value="세계지리">🌍 세계지리</option>
+                        <option value="과학">🔬 과학</option>
+                        <option value="예술과 문화">🎨 예술과 문화</option>
+                    </select>
+                </div>
+
+                <ol id="leaderboardList" class="leaderboard-list"></ol>
+                <p id="leaderboardEmpty" class="empty-message" hidden>아직 기록이 없습니다. 게임을 플레이해보세요!</p>
+
+                <button id="leaderboardBackBtn" type="button" class="btn btn-secondary">돌아가기</button>
+            </div>
+        </div>
+
+        <!-- 통계 화면 -->
+        <div id="statsScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">📊 내 통계</h2>
+
+                <div class="result-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statsPlayCount">0</div>
+                        <div class="stat-label">총 플레이</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statsBestScore">0</div>
+                        <div class="stat-label">최고 점수</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statsAvgScore">0</div>
+                        <div class="stat-label">평균 점수</div>
+                    </div>
+                </div>
+
+                <h3 class="section-subtitle">카테고리별 정답률</h3>
+                <div id="categoryAccuracyList" class="category-accuracy-list"></div>
+
+                <h3 class="section-subtitle">최근 점수 추이</h3>
+                <div id="scoreTrendChart" class="score-trend-chart"></div>
+
+                <p id="statsEmpty" class="empty-message" hidden>아직 기록이 없습니다. 게임을 플레이해보세요!</p>
+
+                <div class="stats-actions">
+                    <button id="statsBackBtn" type="button" class="btn btn-secondary">돌아가기</button>
+                    <button id="exportHistoryBtn" type="button" class="btn btn-ghost">📤 내 기록 내보내기</button>
+                </div>
             </div>
         </div>
 
@@ -100,7 +177,7 @@
             </div>
 
             <!-- 피드백 모달 -->
-            <div id="feedbackModal" class="feedback-modal">
+            <div id="feedbackModal" class="feedback-modal" role="alert" aria-live="assertive">
                 <div class="feedback-content">
                     <div id="feedbackIcon" class="feedback-icon"></div>
                     <h3 id="feedbackTitle">정답!</h3>
@@ -116,6 +193,7 @@
             <div class="result-content">
                 <h1 class="result-title">🏆 퀴즈 완료!</h1>
                 <p class="result-mode">게임 모드: <span id="modeLabel">전체 도전</span></p>
+                <p id="newBestBadge" class="new-best-badge" hidden>🎉 개인 최고 기록 달성!</p>
 
                 <div class="result-stats">
                     <div class="stat-card">
@@ -145,6 +223,7 @@
                 </div>
 
                 <div class="result-actions">
+                    <button id="shareBtn" type="button" class="btn btn-ghost">📋 결과 공유</button>
                     <button id="restartBtn" class="btn btn-primary">다시 시작</button>
                 </div>
             </div>
@@ -152,6 +231,7 @@
     </div>
 
     <script src="questions.js"></script>
+    <script src="storage.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
