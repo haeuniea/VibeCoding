@@ -4,7 +4,26 @@ const addBtn = document.getElementById('add-btn');
 const todoList = document.getElementById('todo-list');
 const filterArea = document.getElementById('filter-area');
 
-let todos = [];
+const STORAGE_KEY = 'todos';
+
+function loadTodos() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveTodos() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  } catch (e) {
+    // localStorage 사용 불가 시(용량 초과, 비공개 모드 등) 저장을 건너뛴다
+  }
+}
+
+let todos = loadTodos();
 let currentFilter = '전체';
 
 function addTodo() {
@@ -20,6 +39,7 @@ function addTodo() {
   });
 
   todoInput.value = '';
+  saveTodos();
   render();
 }
 
@@ -34,12 +54,14 @@ function editTodo(id) {
   if (!trimmed) return;
 
   todo.title = trimmed;
+  saveTodos();
   render();
 }
 
 function deleteTodo(id) {
   if (!confirm('삭제하시겠습니까?')) return;
   todos = todos.filter((t) => t.id !== id);
+  saveTodos();
   render();
 }
 
@@ -48,6 +70,7 @@ function toggleComplete(id) {
   if (!todo) return;
 
   todo.completed = !todo.completed;
+  saveTodos();
   render();
 }
 
@@ -107,3 +130,5 @@ filterArea.addEventListener('click', (event) => {
 
   render();
 });
+
+render();
