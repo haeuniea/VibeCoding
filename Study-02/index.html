@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>할 일 관리</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>할 일 관리</h1>
+
+    <section class="input-area">
+      <input type="text" id="todo-input" placeholder="할 일을 입력하세요">
+      <select id="category-select">
+        <option value="업무">업무</option>
+        <option value="개인">개인</option>
+        <option value="공부">공부</option>
+      </select>
+      <button id="add-btn">추가</button>
+    </section>
+
+    <section class="list-area">
+      <ul id="todo-list"></ul>
+    </section>
+
+    <section class="progress-area">
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p id="progress-text">0 / 0 완료</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
