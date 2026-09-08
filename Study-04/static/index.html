@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>냉장고 레시피 도우미</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --card-bg: #ffffff;
+    --text: #2b2420;
+    --muted: #8a8078;
+    --border: #ece5db;
+    --accent: #e8622c;
+    --accent-hover: #d4531f;
+    --accent-soft: #fdeee5;
+    --danger: #c0392b;
+    --danger-soft: #fbeae7;
+    --success-soft: #eaf3ea;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(43,36,32,0.04), 0 8px 24px rgba(43,36,32,0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 32px 16px 64px;
+    line-height: 1.5;
+  }
+  .app { max-width: 560px; margin: 0 auto; }
+  .app-header { text-align: center; margin-bottom: 24px; }
+  .app-header h1 { font-size: 24px; margin: 0 0 6px; }
+  .app-header p { color: var(--muted); font-size: 14px; margin: 0; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .step-header h2 { font-size: 16px; margin: 0; }
+
+  button {
+    font: inherit; cursor: pointer; border: none; border-radius: 10px;
+    padding: 10px 16px; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: #fff; transition: background 0.15s, opacity 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { background: #ddd3c8; color: #fff; cursor: not-allowed; opacity: 0.8; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.secondary:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-soft); }
+  button.link { background: none; color: var(--muted); padding: 4px; font-weight: 500; }
+  button.link:hover { color: var(--text); background: none; }
+
+  input[type="email"], input[type="password"], input[type="text"] {
+    font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+    width: 100%; box-sizing: border-box; background: #fffdfb;
+  }
+  input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  /* 인증 */
+  #auth-section input { margin-bottom: 8px; }
+  .auth-row { display: flex; gap: 8px; }
+  .auth-row button { flex: 1; }
+  #auth-error { color: var(--danger); font-size: 13px; margin-top: 6px; min-height: 1em; }
+  #auth-logged-in { display: flex; align-items: center; justify-content: space-between; }
+  #auth-current-email { color: var(--muted); font-size: 14px; }
+
+  /* 1단계: 업로드 */
+  #dropzone {
+    border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px 16px;
+    text-align: center; color: var(--muted); cursor: pointer; margin-bottom: 12px;
+    transition: border-color 0.15s, background 0.15s; font-size: 14px;
+  }
+  #dropzone:hover, #dropzone.drag { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  #preview { max-width: 100%; max-height: 220px; display: none; margin-bottom: 12px; border-radius: 10px; }
+
+  #status, #recipe-status { margin: 10px 0; color: var(--muted); font-size: 14px; min-height: 1.2em; }
+  #error, #recipe-error { margin: 10px 0; color: var(--danger); font-size: 14px; }
+
+  #ingredients { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+  #ingredients li {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent-hover);
+    border-radius: 999px; padding: 6px 6px 6px 14px; font-size: 14px; font-weight: 500;
+  }
+  #ingredients li button {
+    background: none; color: var(--accent-hover); padding: 0 6px; font-size: 15px; border-radius: 50%; font-weight: 400;
+  }
+  #ingredients li button:hover { background: rgba(232,98,44,0.15); }
+
+  /* 2단계: 레시피 */
+  .recipe-card {
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .recipe-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--accent-soft); }
+  .recipe-card h3 { margin: 0 0 4px; font-size: 15px; }
+  .recipe-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  #recipe-detail { display: none; }
+  #back-to-list { margin-bottom: 14px; }
+  #recipe-detail h3 { margin: 0 0 10px; font-size: 18px; }
+  #recipe-detail p { font-size: 14px; margin: 6px 0; }
+  #recipe-detail .missing { color: var(--danger); }
+  #detail-steps { padding-left: 20px; font-size: 14px; }
+  #detail-steps li { margin-bottom: 6px; }
+  #save-recipe-btn { margin-top: 12px; }
+  #save-status { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+  /* 3단계: 저장 목록 */
+  .saved-recipe-item {
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
+    font-size: 14px; transition: background 0.15s;
+  }
+  .saved-recipe-item:hover { background: var(--accent-soft); }
+  .saved-recipe-item span { cursor: pointer; font-weight: 500; }
+  .saved-recipe-item button { padding: 6px 12px; font-size: 13px; background: var(--danger-soft); color: var(--danger); }
+  .saved-recipe-item button:hover { background: var(--danger); color: #fff; }
+  #saved-recipes-list:empty::before,
+  #saved-recipes-list.empty { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1>🥬 냉장고 레시피 도우미</h1>
+    <p>사진 한 장으로 재료를 인식하고, 레시피를 추천받아 저장하세요.</p>
+  </div>
+
+  <div class="card" id="auth-section">
+    <div id="auth-logged-out">
+      <input type="email" id="auth-email" placeholder="이메일">
+      <input type="password" id="auth-password" placeholder="비밀번호">
+      <div class="auth-row">
+        <button id="login-btn">로그인</button>
+        <button id="signup-btn" class="secondary">회원가입</button>
+      </div>
+      <div id="auth-error"></div>
+    </div>
+    <div id="auth-logged-in" style="display:none">
+      <span id="auth-current-email"></span>
+      <button id="logout-btn" class="secondary">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-header"><span class="step-badge">1</span><h2>냉장고 사진으로 재료 인식하기</h2></div>
+
+    <div id="dropzone">📷 사진을 클릭하거나 여기로 드래그하세요</div>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <img id="preview" alt="미리보기">
+
+    <button id="recognize-btn" disabled>재료 인식하기</button>
+
+    <div id="status"></div>
+    <div id="error"></div>
+
+    <ul id="ingredients"></ul>
+    <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
+  </div>
+
+  <div class="card">
+    <div class="step-header"><span class="step-badge">2</span><h2>레시피 추천</h2></div>
+
+    <button id="recommend-btn" disabled>레시피 추천받기</button>
+    <div id="recipe-status"></div>
+    <div id="recipe-error"></div>
+
+    <div id="recipe-list"></div>
+
+    <div id="recipe-detail">
+      <button id="back-to-list" class="link">← 목록으로</button>
+      <h3 id="detail-title"></h3>
+      <p><strong>예상 조리 시간:</strong> <span id="detail-time"></span>분</p>
+      <p><strong>사용 재료:</strong> <span id="detail-used"></span></p>
+      <p class="missing"><strong>추가로 필요한 재료:</strong> <span id="detail-missing"></span></p>
+      <ol id="detail-steps"></ol>
+      <button id="save-recipe-btn">이 레시피 저장</button>
+      <div id="save-status"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-header"><span class="step-badge">3</span><h2>내가 저장한 레시피</h2></div>
+    <div id="saved-recipes-list"></div>
+  </div>
+</div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const recognizeBtn = document.getElementById('recognize-btn');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const ingredientsEl = document.getElementById('ingredients');
+    const addIngredientInput = document.getElementById('add-ingredient');
+
+    let selectedFile = null;
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+      if (e.dataTransfer.files.length > 0) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      selectedFile = file;
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      recognizeBtn.disabled = false;
+      errorEl.textContent = '';
+    }
+
+    function renderIngredients(list) {
+      ingredientsEl.innerHTML = '';
+      list.forEach((name, idx) => {
+        const li = document.createElement('li');
+        li.textContent = name + ' ';
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '×';
+        removeBtn.onclick = () => {
+          list.splice(idx, 1);
+          renderIngredients(list);
+        };
+        li.appendChild(removeBtn);
+        ingredientsEl.appendChild(li);
+      });
+      ingredientsEl.dataset.list = JSON.stringify(list);
+      recommendBtn.disabled = list.length === 0;
+    }
+
+    let currentIngredients = [];
+
+    addIngredientInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && addIngredientInput.value.trim()) {
+        currentIngredients.push(addIngredientInput.value.trim());
+        renderIngredients(currentIngredients);
+        addIngredientInput.value = '';
+      }
+    });
+
+    recognizeBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      errorEl.textContent = '';
+      statusEl.textContent = '인식하는 중...';
+      recognizeBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      try {
+        const res = await fetch('/api/recognize-ingredients', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '인식에 실패했습니다.');
+        }
+        currentIngredients = data.ingredients || [];
+        if (currentIngredients.length === 0) {
+          statusEl.textContent = '재료를 인식하지 못했어요. 다시 시도하거나 직접 입력해주세요.';
+        } else {
+          statusEl.textContent = '인식 완료. 목록을 확인하고 필요하면 수정하세요.';
+        }
+        renderIngredients(currentIngredients);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        statusEl.textContent = '';
+      } finally {
+        recognizeBtn.disabled = false;
+      }
+    });
+
+    const recommendBtn = document.getElementById('recommend-btn');
+    const recipeStatusEl = document.getElementById('recipe-status');
+    const recipeErrorEl = document.getElementById('recipe-error');
+    const recipeListEl = document.getElementById('recipe-list');
+    const recipeDetailEl = document.getElementById('recipe-detail');
+    const backToListBtn = document.getElementById('back-to-list');
+
+    let currentRecipes = [];
+    let activeRecipe = null;
+
+    function renderRecipeCards(recipes) {
+      recipeListEl.innerHTML = '';
+      recipeDetailEl.style.display = 'none';
+      recipeListEl.style.display = 'block';
+      recipes.forEach((recipe) => {
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+        const summary = recipe.used_ingredients.join(', ') || '재료 정보 없음';
+        card.innerHTML = `<h3>${recipe.title}</h3><p>${summary}</p>`;
+        card.onclick = () => showRecipeDetail(recipe);
+        recipeListEl.appendChild(card);
+      });
+    }
+
+    function showRecipeDetail(recipe) {
+      activeRecipe = recipe;
+      document.getElementById('detail-title').textContent = recipe.title;
+      document.getElementById('detail-time').textContent = recipe.estimated_time_minutes ?? '?';
+      document.getElementById('detail-used').textContent = recipe.used_ingredients.join(', ') || '없음';
+      document.getElementById('detail-missing').textContent = recipe.missing_ingredients.join(', ') || '없음';
+      const stepsEl = document.getElementById('detail-steps');
+      stepsEl.innerHTML = '';
+      recipe.steps.forEach((step) => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        stepsEl.appendChild(li);
+      });
+      document.getElementById('save-status').textContent = '';
+      recipeListEl.style.display = 'none';
+      recipeDetailEl.style.display = 'block';
+    }
+
+    backToListBtn.addEventListener('click', () => {
+      recipeDetailEl.style.display = 'none';
+      recipeListEl.style.display = 'block';
+    });
+
+    recommendBtn.addEventListener('click', async () => {
+      if (currentIngredients.length === 0) return;
+      recipeErrorEl.textContent = '';
+      recipeStatusEl.textContent = '레시피를 만드는 중...';
+      recommendBtn.disabled = true;
+      recipeListEl.innerHTML = '';
+      recipeDetailEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/recommend-recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ingredients: currentIngredients }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '레시피 생성에 실패했어요. 다시 시도해주세요.');
+        }
+        currentRecipes = data.recipes || [];
+        if (currentRecipes.length === 0) {
+          recipeStatusEl.textContent = '레시피를 만들지 못했어요. 다시 시도해주세요.';
+        } else {
+          recipeStatusEl.textContent = `${currentRecipes.length}개의 레시피를 추천받았어요.`;
+        }
+        renderRecipeCards(currentRecipes);
+      } catch (err) {
+        recipeErrorEl.textContent = err.message;
+        recipeStatusEl.textContent = '';
+      } finally {
+        recommendBtn.disabled = currentIngredients.length === 0;
+      }
+    });
+
+    // --- 인증 (3단계) ---
+    const authLoggedOutEl = document.getElementById('auth-logged-out');
+    const authLoggedInEl = document.getElementById('auth-logged-in');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authErrorEl = document.getElementById('auth-error');
+    const authCurrentEmailEl = document.getElementById('auth-current-email');
+    const savedRecipesListEl = document.getElementById('saved-recipes-list');
+    const saveRecipeBtn = document.getElementById('save-recipe-btn');
+    const saveStatusEl = document.getElementById('save-status');
+
+    function getToken() {
+      try { return localStorage.getItem('token'); } catch { return null; }
+    }
+    function getStoredEmail() {
+      try { return localStorage.getItem('email'); } catch { return null; }
+    }
+    function setAuth(token, email) {
+      try {
+        localStorage.setItem('token', token);
+        localStorage.setItem('email', email);
+      } catch {}
+      renderAuthState();
+      loadSavedRecipes();
+    }
+    function clearAuth() {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('email');
+      } catch {}
+      renderAuthState();
+      savedRecipesListEl.innerHTML = '';
+    }
+
+    function renderAuthState() {
+      const token = getToken();
+      if (token) {
+        authLoggedOutEl.style.display = 'none';
+        authLoggedInEl.style.display = 'flex';
+        authCurrentEmailEl.textContent = getStoredEmail() || '';
+      } else {
+        authLoggedOutEl.style.display = 'block';
+        authLoggedInEl.style.display = 'none';
+      }
+    }
+
+    async function submitAuth(path) {
+      authErrorEl.textContent = '';
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value;
+      if (!email || !password) {
+        authErrorEl.textContent = '이메일과 비밀번호를 입력해주세요.';
+        return;
+      }
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '요청에 실패했습니다.');
+        if (path === '/api/login') {
+          setAuth(data.token, data.email);
+          authPasswordInput.value = '';
+        } else {
+          authErrorEl.textContent = '가입 완료! 이제 로그인해주세요.';
+        }
+      } catch (err) {
+        authErrorEl.textContent = err.message;
+      }
+    }
+
+    document.getElementById('signup-btn').addEventListener('click', () => submitAuth('/api/signup'));
+    document.getElementById('login-btn').addEventListener('click', () => submitAuth('/api/login'));
+    document.getElementById('logout-btn').addEventListener('click', clearAuth);
+
+    // --- 레시피 저장 (3단계) ---
+    saveRecipeBtn.addEventListener('click', async () => {
+      if (!activeRecipe) return;
+      const token = getToken();
+      if (!token) {
+        saveStatusEl.textContent = '저장하려면 먼저 로그인해주세요.';
+        authEmailInput.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      saveStatusEl.textContent = '저장하는 중...';
+      try {
+        const res = await fetch('/api/recipes/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ recipe: activeRecipe }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '저장에 실패했습니다.');
+        saveStatusEl.textContent = '저장했어요!';
+        loadSavedRecipes();
+      } catch (err) {
+        saveStatusEl.textContent = err.message;
+      }
+    });
+
+    async function loadSavedRecipes() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch('/api/recipes/saved', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '목록을 불러오지 못했습니다.');
+        renderSavedRecipes(data.saved_recipes || []);
+      } catch (err) {
+        savedRecipesListEl.textContent = err.message;
+      }
+    }
+
+    function renderSavedRecipes(recipes) {
+      savedRecipesListEl.innerHTML = '';
+      if (recipes.length === 0) {
+        savedRecipesListEl.textContent = '아직 저장한 레시피가 없어요.';
+        savedRecipesListEl.classList.add('empty');
+        return;
+      }
+      savedRecipesListEl.classList.remove('empty');
+      recipes.forEach((recipe) => {
+        const item = document.createElement('div');
+        item.className = 'saved-recipe-item';
+        const title = document.createElement('span');
+        title.textContent = recipe.title;
+        title.onclick = () => showRecipeDetail(recipe);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '삭제';
+        deleteBtn.onclick = async () => {
+          const token = getToken();
+          await fetch(`/api/recipes/saved/${recipe.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          loadSavedRecipes();
+        };
+        item.appendChild(title);
+        item.appendChild(deleteBtn);
+        savedRecipesListEl.appendChild(item);
+      });
+    }
+
+    renderAuthState();
+    loadSavedRecipes();
+  </script>
+</body>
+</html>
