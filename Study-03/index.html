@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>상식만렙</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <section id="screen-start" class="screen">
+      <p class="eyebrow">한국사 · 과학 · 지리 · 예술과 문화</p>
+      <h1 class="app-title">상식만렙</h1>
+      <p class="lead">4개 카테고리, 총 40문제. 고른 즉시 정답 여부를 확인하며 풀어보세요.</p>
+      <ul class="rules-list">
+        <li>총 40문제, 4지선다</li>
+        <li>선택 즉시 정답 확인, 한 번 고르면 바꿀 수 없어요</li>
+        <li>문제별 제한 시간 없음</li>
+      </ul>
+      <div class="field">
+        <label class="field-label" for="nickname-input">닉네임 (결과 화면에 표시)</label>
+        <input id="nickname-input" type="text" maxlength="20" placeholder="닉네임을 입력하세요" autocomplete="off">
+        <p id="nickname-error" class="field-error" hidden>닉네임을 입력해주세요.</p>
+      </div>
+      <button id="start-btn" class="btn btn-primary">시작하기</button>
+    </section>
+
+    <section id="screen-quiz" class="screen" hidden>
+      <div class="quiz-top">
+        <span class="progress-text" id="progress-text">1 / 40</span>
+        <span class="category-chip" id="quiz-category-chip">한국사</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="quiz-progress-fill"></div>
+      </div>
+      <h2 class="question-text" id="question-text"></h2>
+      <div class="choices" id="choices"></div>
+      <p class="answer-note" id="answer-note" hidden></p>
+      <button id="next-btn" class="btn btn-primary" hidden>다음 문제</button>
+    </section>
+
+    <section id="screen-result" class="screen" hidden>
+      <p class="eyebrow">결과</p>
+      <h1 class="app-title" id="result-nickname"></h1>
+      <div class="score-hero">
+        <span class="score-value" id="score-total">0</span>
+        <span class="score-max">/ 40</span>
+      </div>
+      <div class="category-breakdown" id="category-breakdown"></div>
+      <div class="result-actions">
+        <button id="replay-btn" class="btn btn-primary">다시 플레이</button>
+        <button id="records-btn" class="btn btn-secondary">기록 보기</button>
+      </div>
+    </section>
+
+    <section id="screen-records" class="screen" hidden>
+      <p class="eyebrow">이 기기의 기록</p>
+      <h1 class="app-title">플레이 기록</h1>
+      <p class="lead" id="records-status"></p>
+      <div class="my-record-banner" id="my-record-banner" hidden></div>
+      <ol class="records-list" id="records-list"></ol>
+      <div class="result-actions">
+        <button id="records-replay-btn" class="btn btn-primary">다시 플레이</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

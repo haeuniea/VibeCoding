@@ -1,0 +1,23 @@
+{
+  "studentName": "지우",
+  "exportedAt": "2026-09-08T09:20:00.000Z",
+  "history": [
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 198,
+      "correctAnswers": 22,
+      "totalQuestions": 40,
+      "accuracy": 55,
+      "avgResponseTime": 10.5,
+      "longestStreak": 4,
+      "categoryScores": {
+        "한국사": { "correct": 7, "total": 10 },
+        "세계지리": { "correct": 3, "total": 10 },
+        "과학": { "correct": 6, "total": 10 },
+        "예술과 문화": { "correct": 6, "total": 10 }
+      },
+      "timestamp": "2026-09-01T12:00:00.000Z"
+    }
+  ]
+}

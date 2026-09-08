@@ -1,0 +1,85 @@
+{
+  "studentName": "민준",
+  "exportedAt": "2026-09-08T09:00:00.000Z",
+  "history": [
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 432,
+      "correctAnswers": 36,
+      "totalQuestions": 40,
+      "accuracy": 90,
+      "avgResponseTime": 6.5,
+      "longestStreak": 15,
+      "categoryScores": {
+        "한국사": { "correct": 9, "total": 10 },
+        "세계지리": { "correct": 9, "total": 10 },
+        "과학": { "correct": 9, "total": 10 },
+        "예술과 문화": { "correct": 9, "total": 10 }
+      },
+      "timestamp": "2026-08-10T10:15:00.000Z"
+    },
+    {
+      "mode": "category",
+      "category": "과학",
+      "totalScore": 117,
+      "correctAnswers": 9,
+      "totalQuestions": 10,
+      "accuracy": 90,
+      "avgResponseTime": 5.8,
+      "longestStreak": 9,
+      "categoryScores": {
+        "과학": { "correct": 9, "total": 10 }
+      },
+      "timestamp": "2026-08-17T14:00:00.000Z"
+    },
+    {
+      "mode": "speed",
+      "category": null,
+      "totalScore": 187,
+      "correctAnswers": 17,
+      "totalQuestions": 20,
+      "accuracy": 85,
+      "avgResponseTime": 8.2,
+      "longestStreak": 10,
+      "categoryScores": {
+        "한국사": { "correct": 5, "total": 5 },
+        "세계지리": { "correct": 4, "total": 5 },
+        "과학": { "correct": 4, "total": 5 },
+        "예술과 문화": { "correct": 4, "total": 5 }
+      },
+      "timestamp": "2026-08-24T09:30:00.000Z"
+    },
+    {
+      "mode": "full",
+      "category": null,
+      "totalScore": 494,
+      "correctAnswers": 38,
+      "totalQuestions": 40,
+      "accuracy": 95,
+      "avgResponseTime": 6.0,
+      "longestStreak": 20,
+      "categoryScores": {
+        "한국사": { "correct": 10, "total": 10 },
+        "세계지리": { "correct": 9, "total": 10 },
+        "과학": { "correct": 10, "total": 10 },
+        "예술과 문화": { "correct": 9, "total": 10 }
+      },
+      "timestamp": "2026-08-31T16:45:00.000Z"
+    },
+    {
+      "mode": "category",
+      "category": "예술과 문화",
+      "totalScore": 150,
+      "correctAnswers": 10,
+      "totalQuestions": 10,
+      "accuracy": 100,
+      "avgResponseTime": 5.0,
+      "longestStreak": 10,
+      "categoryScores": {
+        "예술과 문화": { "correct": 10, "total": 10 }
+      },
+      "timestamp": "2026-09-05T11:20:00.000Z"
+    }
+  ]
+}
