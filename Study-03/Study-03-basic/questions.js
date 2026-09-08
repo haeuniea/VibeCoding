@@ -94,7 +94,7 @@ const quizQuestions = [
         id: 41,
         category: "한국사",
         difficulty: "medium",
-        question: "고려 무신정권의 최고 권력기구는?",
+        question: "무신정변 직후(1170년경) 고려 무신정권의 최고 권력기구는?",
         options: ["중방", "정방", "도방", "삼별초"],
         correctAnswer: 0,
         explanation: "중방은 1170년 무신정변 이후 무신들이 국정을 논의하던 최고 권력기구였습니다."
@@ -144,7 +144,7 @@ const quizQuestions = [
         question: "세계에서 가장 긴 강은?",
         options: ["아마존강", "나일강", "양쯔강", "미시시피강"],
         correctAnswer: 1,
-        explanation: "나일강은 약 6,650km로 세계에서 가장 긴 강입니다."
+        explanation: "나일강은 약 6,650km로 전통적인 측정 기준에서 세계에서 가장 긴 강으로 꼽힙니다. 다만 최근에는 아마존강이 더 길다는 연구 결과도 있어 학계에서 논쟁이 있습니다."
     },
     {
         id: 13,
@@ -168,7 +168,7 @@ const quizQuestions = [
         id: 15,
         category: "세계지리",
         difficulty: "medium",
-        question: "세계에서 가장 큰 사막은?",
+        question: "극지방의 한랭 사막까지 포함할 때, 세계에서 가장 큰 사막은?",
         options: ["사하라 사막", "고비 사막", "남극 사막", "아라비아 사막"],
         correctAnswer: 2,
         explanation: "남극 대륙은 약 1,400만km²의 극지 사막으로 세계 최대입니다."
@@ -186,7 +186,7 @@ const quizQuestions = [
         id: 17,
         category: "세계지리",
         difficulty: "medium",
-        question: "세계에서 가장 높은 산은?",
+        question: "해발고도 기준으로 세계에서 가장 높은 산은?",
         options: ["K2", "에베레스트", "칸첸중가", "마칼루"],
         correctAnswer: 1,
         explanation: "에베레스트산은 해발 8,848.86m로 세계 최고봉입니다."
@@ -416,7 +416,7 @@ const quizQuestions = [
         id: 46,
         category: "세계지리",
         difficulty: "medium",
-        question: "아프리카 대륙에서 면적이 가장 큰 국가는?",
+        question: "(2024년 기준) 아프리카 대륙에서 면적이 가장 큰 국가는?",
         options: ["나이지리아","남아프리카공화국","알제리","이집트"],
         correctAnswer: 2,
         explanation: "알제리는 약 238만km²로 아프리카에서 가장 큰 국가입니다."
