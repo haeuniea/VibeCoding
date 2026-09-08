@@ -5,7 +5,9 @@
 - 루트(`index.html`) — 모바일 화면 중심의 기본 버전
 - `web_version/` — 사이드바 + 카드 그리드 레이아웃으로 데스크톱 전체 화면에 맞춘 버전 (기능·데이터·저장 방식은 동일)
 
-![스크린샷](screenshot.png)
+| 기본 버전 | web_version |
+|---|---|
+| ![기본 버전 스크린샷](screenshot.png) | ![web_version 스크린샷](web_version/screenshot.png) |
 
 ## 실행 방법
 
