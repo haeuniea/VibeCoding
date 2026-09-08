@@ -85,10 +85,10 @@ const quizQuestions = [
         id: 10,
         category: "한국사",
         difficulty: "medium",
-        question: "조선시대 최고 교육기관은?",
+        question: "조선시대 국립 교육기관 중 최고 등급은?",
         options: ["향교", "서원", "성균관", "서당"],
         correctAnswer: 2,
-        explanation: "성균관은 조선시대 최고의 국립 교육기관이었습니다."
+        explanation: "성균관은 조선시대 국립 교육기관 중 최고 등급(국립대학격)이었습니다."
     },
     {
         id: 41,
@@ -132,10 +132,10 @@ const quizQuestions = [
         id: 11,
         category: "세계지리",
         difficulty: "easy",
-        question: "세계에서 가장 큰 대륙은?",
+        question: "면적 기준으로 세계에서 가장 큰 대륙은?",
         options: ["아프리카", "아시아", "북아메리카", "남극"],
         correctAnswer: 1,
-        explanation: "아시아는 약 44,579,000km²로 세계에서 가장 큰 대륙입니다."
+        explanation: "아시아는 약 44,579,000km²로 면적 기준 세계에서 가장 큰 대륙입니다."
     },
     {
         id: 12,
@@ -153,16 +153,16 @@ const quizQuestions = [
         question: "일본의 수도는?",
         options: ["오사카", "교토", "도쿄", "요코하마"],
         correctAnswer: 2,
-        explanation: "도쿄는 일본의 수도이자 최대 도시입니다."
+        explanation: "도쿄는 일본의 수도이자 인구 기준 최대 도시입니다."
     },
     {
         id: 14,
         category: "세계지리",
         difficulty: "hard",
-        question: "세계에서 가장 깊은 해구는?",
+        question: "수심 기준으로 세계에서 가장 깊은 해구는?",
         options: ["마리아나 해구", "통가 해구", "필리핀 해구", "푸에르토리코 해구"],
         correctAnswer: 0,
-        explanation: "마리아나 해구의 챌린저 해연은 약 11,034m로 가장 깊습니다."
+        explanation: "마리아나 해구의 챌린저 해연은 수심 약 11,034m로 세계에서 가장 깊습니다."
     },
     {
         id: 15,
@@ -180,7 +180,7 @@ const quizQuestions = [
         question: "프랑스의 수도는?",
         options: ["런던", "베를린", "파리", "로마"],
         correctAnswer: 2,
-        explanation: "파리는 프랑스의 수도이자 최대 도시입니다."
+        explanation: "파리는 프랑스의 수도이자 인구 기준 최대 도시입니다."
     },
     {
         id: 17,
@@ -195,10 +195,10 @@ const quizQuestions = [
         id: 18,
         category: "세계지리",
         difficulty: "hard",
-        question: "세계에서 가장 큰 호수는?",
+        question: "면적 기준으로 세계에서 가장 큰 호수는?",
         options: ["바이칼호", "슈피리어호", "카스피해", "빅토리아호"],
         correctAnswer: 2,
-        explanation: "카스피해는 약 371,000km²로 세계 최대의 호수입니다."
+        explanation: "카스피해는 약 371,000km²로 면적 기준 세계 최대의 호수입니다. 다만 염분이 높아 호수가 아닌 내해로 분류해야 한다는 논란도 있습니다."
     },
     {
         id: 19,
@@ -236,7 +236,7 @@ const quizQuestions = [
         question: "태양계에서 가장 큰 행성은?",
         options: ["토성", "목성", "천왕성", "해왕성"],
         correctAnswer: 1,
-        explanation: "목성은 지름이 약 142,984km로 태양계 최대 행성입니다."
+        explanation: "목성은 지름이 약 142,984km로 지름·질량·부피 모든 기준에서 태양계 최대 행성입니다."
     },
     {
         id: 23,
@@ -272,7 +272,7 @@ const quizQuestions = [
         question: "지구의 대기 중 가장 많은 기체는?",
         options: ["산소", "이산화탄소", "질소", "수소"],
         correctAnswer: 2,
-        explanation: "질소는 대기의 약 78%를 차지합니다."
+        explanation: "질소는 대기의 약 78%(부피 기준)를 차지합니다."
     },
     {
         id: 27,
@@ -296,10 +296,10 @@ const quizQuestions = [
         id: 29,
         category: "과학",
         difficulty: "easy",
-        question: "인체에서 가장 큰 장기는?",
+        question: "무게 기준으로 인체에서 가장 큰 장기는?",
         options: ["심장", "간", "폐", "피부"],
         correctAnswer: 3,
-        explanation: "피부는 인체에서 가장 큰 장기로 체중의 약 16%를 차지합니다."
+        explanation: "피부는 체중의 약 16%를 차지해 무게 기준으로 인체에서 가장 큰 장기입니다."
     },
     {
         id: 30,
