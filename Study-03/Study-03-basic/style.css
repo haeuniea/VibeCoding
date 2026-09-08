@@ -99,6 +99,88 @@ body {
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
+/* 게임 모드 선택 */
+.mode-selection {
+    margin-bottom: 30px;
+}
+
+.mode-selection-title {
+    font-size: 1.05em;
+    color: #555;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.mode-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.mode-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 12px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.mode-icon {
+    font-size: 1.6em;
+}
+
+.mode-name {
+    font-weight: 600;
+    font-size: 1em;
+}
+
+.mode-desc {
+    font-size: 0.8em;
+    opacity: 0.85;
+}
+
+.category-select-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.category-select-wrap label {
+    font-size: 0.95em;
+    color: #555;
+    font-weight: 500;
+}
+
+.category-select-wrap select {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    font-size: 0.95em;
+    color: #333;
+    background: white;
+    cursor: pointer;
+}
+
 /* 버튼 스타일 */
 .btn {
     padding: 15px 40px;
@@ -154,6 +236,32 @@ body {
     font-weight: 500;
 }
 
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .progress-bar {
     height: 6px;
     background: #e0e0e0;
@@ -168,8 +276,34 @@ body {
     width: 0%;
 }
 
+.timer-bar {
+    height: 5px;
+    background: #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+.timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 1s linear;
+    width: 100%;
+}
+
+.timer-fill.warning {
+    background: linear-gradient(90deg, #f44336, #ff9800);
+}
+
 .quiz-content {
     padding: 40px 30px;
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
 .category-badge {
@@ -180,7 +314,26 @@ body {
     border-radius: 20px;
     font-size: 0.9em;
     font-weight: 500;
-    margin-bottom: 20px;
+}
+
+.streak-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ff9800, #f44336);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.timer-text {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #fff3e0;
+    color: #e65100;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
 }
 
 .question {
@@ -238,6 +391,43 @@ body {
 .option-btn.disabled {
     pointer-events: none;
     opacity: 0.7;
+}
+
+.option-btn.eliminated {
+    opacity: 0.35;
+    text-decoration: line-through;
+    pointer-events: none;
+}
+
+/* 일시정지 오버레이 */
+.pause-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 900;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.pause-overlay.show {
+    display: flex;
+}
+
+.pause-content h3 {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.pause-content p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+#quizScreen {
+    position: relative;
 }
 
 @keyframes correctPulse {
@@ -307,6 +497,18 @@ body {
     color: #666;
     line-height: 1.5;
     margin-bottom: 20px;
+}
+
+.score-breakdown {
+    color: var(--success-color);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.result-mode {
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 0.95em;
 }
 
 /* 결과 화면 */
