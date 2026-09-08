@@ -2,102 +2,201 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>냉장고 재료 인식</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>냉장고 레시피 도우미</title>
 <style>
-  body { font-family: sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; }
-  h1 { font-size: 20px; }
+  :root {
+    --bg: #faf7f2;
+    --card-bg: #ffffff;
+    --text: #2b2420;
+    --muted: #8a8078;
+    --border: #ece5db;
+    --accent: #e8622c;
+    --accent-hover: #d4531f;
+    --accent-soft: #fdeee5;
+    --danger: #c0392b;
+    --danger-soft: #fbeae7;
+    --success-soft: #eaf3ea;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(43,36,32,0.04), 0 8px 24px rgba(43,36,32,0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 32px 16px 64px;
+    line-height: 1.5;
+  }
+  .app { max-width: 560px; margin: 0 auto; }
+  .app-header { text-align: center; margin-bottom: 24px; }
+  .app-header h1 { font-size: 24px; margin: 0 0 6px; }
+  .app-header p { color: var(--muted); font-size: 14px; margin: 0; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .step-header h2 { font-size: 16px; margin: 0; }
+
+  button {
+    font: inherit; cursor: pointer; border: none; border-radius: 10px;
+    padding: 10px 16px; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: #fff; transition: background 0.15s, opacity 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { background: #ddd3c8; color: #fff; cursor: not-allowed; opacity: 0.8; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.secondary:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-soft); }
+  button.link { background: none; color: var(--muted); padding: 4px; font-weight: 500; }
+  button.link:hover { color: var(--text); background: none; }
+
+  input[type="email"], input[type="password"], input[type="text"] {
+    font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+    width: 100%; box-sizing: border-box; background: #fffdfb;
+  }
+  input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  /* 인증 */
+  #auth-section input { margin-bottom: 8px; }
+  .auth-row { display: flex; gap: 8px; }
+  .auth-row button { flex: 1; }
+  #auth-error { color: var(--danger); font-size: 13px; margin-top: 6px; min-height: 1em; }
+  #auth-logged-in { display: flex; align-items: center; justify-content: space-between; }
+  #auth-current-email { color: var(--muted); font-size: 14px; }
+
+  /* 1단계: 업로드 */
   #dropzone {
-    border: 2px dashed #999; border-radius: 8px; padding: 24px; text-align: center;
-    color: #666; cursor: pointer; margin-bottom: 16px;
+    border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px 16px;
+    text-align: center; color: var(--muted); cursor: pointer; margin-bottom: 12px;
+    transition: border-color 0.15s, background 0.15s; font-size: 14px;
   }
-  #dropzone.drag { border-color: #333; color: #333; }
-  #preview { max-width: 100%; max-height: 240px; display: none; margin-bottom: 16px; border-radius: 8px; }
-  button { padding: 8px 16px; cursor: pointer; }
-  #status { margin: 12px 0; color: #666; }
-  #error { margin: 12px 0; color: #c0392b; }
-  #ingredients { list-style: none; padding: 0; }
+  #dropzone:hover, #dropzone.drag { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  #preview { max-width: 100%; max-height: 220px; display: none; margin-bottom: 12px; border-radius: 10px; }
+
+  #status, #recipe-status { margin: 10px 0; color: var(--muted); font-size: 14px; min-height: 1.2em; }
+  #error, #recipe-error { margin: 10px 0; color: var(--danger); font-size: 14px; }
+
+  #ingredients { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 8px; }
   #ingredients li {
-    display: inline-flex; align-items: center; gap: 6px; background: #eee; border-radius: 16px;
-    padding: 4px 10px; margin: 4px; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent-hover);
+    border-radius: 999px; padding: 6px 6px 6px 14px; font-size: 14px; font-weight: 500;
   }
-  #ingredients li button { border: none; background: none; cursor: pointer; padding: 0; font-size: 14px; }
-  #add-ingredient { margin-top: 8px; padding: 6px; width: 100%; box-sizing: border-box; }
-  hr { margin: 24px 0; border: none; border-top: 1px solid #ddd; }
+  #ingredients li button {
+    background: none; color: var(--accent-hover); padding: 0 6px; font-size: 15px; border-radius: 50%; font-weight: 400;
+  }
+  #ingredients li button:hover { background: rgba(232,98,44,0.15); }
+
+  /* 2단계: 레시피 */
   .recipe-card {
-    border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
   }
-  .recipe-card:hover { background: #f7f7f7; }
-  .recipe-card h3 { margin: 0 0 4px 0; font-size: 16px; }
-  .recipe-card p { margin: 0; font-size: 13px; color: #666; }
-  #recipe-detail { display: none; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
-  #recipe-detail h3 { margin-top: 0; }
-  #recipe-detail .missing { color: #c0392b; font-size: 13px; }
-  #back-to-list { margin-bottom: 12px; }
-  #auth-section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
-  #auth-section input { display: block; width: 100%; box-sizing: border-box; margin-bottom: 6px; padding: 6px; }
-  #auth-error { color: #c0392b; font-size: 13px; }
+  .recipe-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--accent-soft); }
+  .recipe-card h3 { margin: 0 0 4px; font-size: 15px; }
+  .recipe-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  #recipe-detail { display: none; }
+  #back-to-list { margin-bottom: 14px; }
+  #recipe-detail h3 { margin: 0 0 10px; font-size: 18px; }
+  #recipe-detail p { font-size: 14px; margin: 6px 0; }
+  #recipe-detail .missing { color: var(--danger); }
+  #detail-steps { padding-left: 20px; font-size: 14px; }
+  #detail-steps li { margin-bottom: 6px; }
+  #save-recipe-btn { margin-top: 12px; }
+  #save-status { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+  /* 3단계: 저장 목록 */
   .saved-recipe-item {
     display: flex; justify-content: space-between; align-items: center;
-    border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;
+    border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
+    font-size: 14px; transition: background 0.15s;
   }
-  .saved-recipe-item span { cursor: pointer; }
+  .saved-recipe-item:hover { background: var(--accent-soft); }
+  .saved-recipe-item span { cursor: pointer; font-weight: 500; }
+  .saved-recipe-item button { padding: 6px 12px; font-size: 13px; background: var(--danger-soft); color: var(--danger); }
+  .saved-recipe-item button:hover { background: var(--danger); color: #fff; }
+  #saved-recipes-list:empty::before,
+  #saved-recipes-list.empty { color: var(--muted); font-size: 14px; }
 </style>
 </head>
 <body>
-  <div id="auth-section">
+<div class="app">
+  <div class="app-header">
+    <h1>🥬 냉장고 레시피 도우미</h1>
+    <p>사진 한 장으로 재료를 인식하고, 레시피를 추천받아 저장하세요.</p>
+  </div>
+
+  <div class="card" id="auth-section">
     <div id="auth-logged-out">
       <input type="email" id="auth-email" placeholder="이메일">
       <input type="password" id="auth-password" placeholder="비밀번호">
-      <button id="signup-btn">회원가입</button>
-      <button id="login-btn">로그인</button>
+      <div class="auth-row">
+        <button id="login-btn">로그인</button>
+        <button id="signup-btn" class="secondary">회원가입</button>
+      </div>
       <div id="auth-error"></div>
     </div>
     <div id="auth-logged-in" style="display:none">
       <span id="auth-current-email"></span>
-      <button id="logout-btn">로그아웃</button>
+      <button id="logout-btn" class="secondary">로그아웃</button>
     </div>
   </div>
 
-  <h1>냉장고 사진으로 재료 인식하기</h1>
+  <div class="card">
+    <div class="step-header"><span class="step-badge">1</span><h2>냉장고 사진으로 재료 인식하기</h2></div>
 
-  <div id="dropzone">사진을 클릭하거나 여기로 드래그하세요</div>
-  <input type="file" id="file-input" accept="image/*" style="display:none">
-  <img id="preview" alt="미리보기">
+    <div id="dropzone">📷 사진을 클릭하거나 여기로 드래그하세요</div>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <img id="preview" alt="미리보기">
 
-  <div>
     <button id="recognize-btn" disabled>재료 인식하기</button>
+
+    <div id="status"></div>
+    <div id="error"></div>
+
+    <ul id="ingredients"></ul>
+    <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
   </div>
 
-  <div id="status"></div>
-  <div id="error"></div>
+  <div class="card">
+    <div class="step-header"><span class="step-badge">2</span><h2>레시피 추천</h2></div>
 
-  <ul id="ingredients"></ul>
-  <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
+    <button id="recommend-btn" disabled>레시피 추천받기</button>
+    <div id="recipe-status"></div>
+    <div id="recipe-error"></div>
 
-  <hr>
+    <div id="recipe-list"></div>
 
-  <h1>레시피 추천</h1>
-  <button id="recommend-btn" disabled>레시피 추천받기</button>
-  <div id="recipe-status"></div>
-  <div id="recipe-error"></div>
-
-  <div id="recipe-list"></div>
-
-  <div id="recipe-detail">
-    <button id="back-to-list">← 목록으로</button>
-    <h3 id="detail-title"></h3>
-    <p><strong>예상 조리 시간:</strong> <span id="detail-time"></span>분</p>
-    <p><strong>사용 재료:</strong> <span id="detail-used"></span></p>
-    <p class="missing"><strong>추가로 필요한 재료:</strong> <span id="detail-missing"></span></p>
-    <ol id="detail-steps"></ol>
-    <button id="save-recipe-btn">이 레시피 저장</button>
-    <div id="save-status"></div>
+    <div id="recipe-detail">
+      <button id="back-to-list" class="link">← 목록으로</button>
+      <h3 id="detail-title"></h3>
+      <p><strong>예상 조리 시간:</strong> <span id="detail-time"></span>분</p>
+      <p><strong>사용 재료:</strong> <span id="detail-used"></span></p>
+      <p class="missing"><strong>추가로 필요한 재료:</strong> <span id="detail-missing"></span></p>
+      <ol id="detail-steps"></ol>
+      <button id="save-recipe-btn">이 레시피 저장</button>
+      <div id="save-status"></div>
+    </div>
   </div>
 
-  <hr>
-
-  <h1>내가 저장한 레시피</h1>
-  <div id="saved-recipes-list"></div>
+  <div class="card">
+    <div class="step-header"><span class="step-badge">3</span><h2>내가 저장한 레시피</h2></div>
+    <div id="saved-recipes-list"></div>
+  </div>
+</div>
 
   <script>
     const dropzone = document.getElementById('dropzone');
@@ -307,7 +406,7 @@
       const token = getToken();
       if (token) {
         authLoggedOutEl.style.display = 'none';
-        authLoggedInEl.style.display = 'block';
+        authLoggedInEl.style.display = 'flex';
         authCurrentEmailEl.textContent = getStoredEmail() || '';
       } else {
         authLoggedOutEl.style.display = 'block';
@@ -390,8 +489,10 @@
       savedRecipesListEl.innerHTML = '';
       if (recipes.length === 0) {
         savedRecipesListEl.textContent = '아직 저장한 레시피가 없어요.';
+        savedRecipesListEl.classList.add('empty');
         return;
       }
+      savedRecipesListEl.classList.remove('empty');
       recipes.forEach((recipe) => {
         const item = document.createElement('div');
         item.className = 'saved-recipe-item';
