@@ -379,15 +379,60 @@ body {
   min-width: 140px;
 }
 
-.debug-block {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
+/* 기록 화면 */
+
+.my-record-banner {
+  background: var(--correct-bg);
+  color: var(--correct);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.debug-block pre {
-  overflow-x: auto;
+.records-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: var(--surface-2);
-  border-radius: 8px;
-  padding: 10px;
+}
+
+.record-row.me {
+  background: var(--correct-bg);
+  outline: 2px solid var(--correct);
+}
+
+.rec-rank {
+  font-family: var(--font-display);
+  width: 28px;
+  text-align: center;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-name {
+  flex: 1;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rec-score {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
 }
