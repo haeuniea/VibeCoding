@@ -5,7 +5,9 @@ MNIST로 학습한 신경망(MLPClassifier)이 마우스로 그린 숫자를 인
 - `desktop_version/` — Tkinter GUI, 서버 없이 로컬에서 실행
 - `web_version/` — Flask 백엔드 + HTML5 캔버스 프론트엔드, 로컬 웹 서버로 실행
 
-![스크린샷](screenshot.png)
+| desktop_version | web_version |
+|---|---|
+| ![desktop 스크린샷](screenshot-desktop.png) | ![web 스크린샷](screenshot-web.png) |
 
 ## 실행 방법
 
