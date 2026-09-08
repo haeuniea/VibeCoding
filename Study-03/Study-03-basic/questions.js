@@ -135,6 +135,15 @@ const quizQuestions = [
         correctAnswer: 0,
         explanation: "강화도 조약(조일수호조규)은 1876년에 체결된 조선 최초의 근대적 조약으로, 일본에 유리한 불평등 조약이었습니다."
     },
+    {
+        id: 50,
+        category: "한국사",
+        difficulty: "hard",
+        question: "현재 전해지는 우리나라 역사서 중 가장 오래된 것은?",
+        options: ["삼국사기", "삼국유사", "동국통감", "고려사"],
+        correctAnswer: 0,
+        explanation: "삼국사기는 1145년(고려 인종 23년) 김부식이 편찬한 기전체 역사서로, 현재 전해지는 우리나라 역사서 중 가장 오래된 것입니다."
+    },
 
     // 세계지리 (10문제)
     {
