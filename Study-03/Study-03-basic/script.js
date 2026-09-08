@@ -45,6 +45,7 @@ const GAME_MODES = {
 
 const MAX_HINTS = 3;
 const scoreManager = new ScoreManager();
+const dataManager = new LocalDataManager();
 
 // 사용자가 시작 화면에서 고른 옵션 (재시작해도 유지)
 let selectedMode = 'full';
@@ -81,10 +82,36 @@ function createInitialState() {
 const startScreen = document.getElementById('startScreen');
 const quizScreen = document.getElementById('quizScreen');
 const resultScreen = document.getElementById('resultScreen');
+const leaderboardScreen = document.getElementById('leaderboardScreen');
+const statsScreen = document.getElementById('statsScreen');
+const allScreens = [startScreen, quizScreen, resultScreen, leaderboardScreen, statsScreen];
+
 const startBtn = document.getElementById('startBtn');
 const nextBtn = document.getElementById('nextBtn');
 const restartBtn = document.getElementById('restartBtn');
+const shareBtn = document.getElementById('shareBtn');
 const feedbackModal = document.getElementById('feedbackModal');
+
+const soundToggleBtn = document.getElementById('soundToggleBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+const leaderboardBtn = document.getElementById('leaderboardBtn');
+const statsBtn = document.getElementById('statsBtn');
+const leaderboardBackBtn = document.getElementById('leaderboardBackBtn');
+const statsBackBtn = document.getElementById('statsBackBtn');
+const periodFilter = document.getElementById('periodFilter');
+const leaderboardCategoryFilter = document.getElementById('leaderboardCategoryFilter');
+const leaderboardList = document.getElementById('leaderboardList');
+const leaderboardEmpty = document.getElementById('leaderboardEmpty');
+
+const statsPlayCountEl = document.getElementById('statsPlayCount');
+const statsBestScoreEl = document.getElementById('statsBestScore');
+const statsAvgScoreEl = document.getElementById('statsAvgScore');
+const categoryAccuracyList = document.getElementById('categoryAccuracyList');
+const scoreTrendChart = document.getElementById('scoreTrendChart');
+const statsEmpty = document.getElementById('statsEmpty');
+
+const newBestBadge = document.getElementById('newBestBadge');
 
 const modeButtons = document.querySelectorAll('.mode-btn');
 const categorySelectWrap = document.getElementById('categorySelectWrap');
@@ -117,6 +144,174 @@ const feedbackIcon = document.getElementById('feedbackIcon');
 const feedbackTitle = document.getElementById('feedbackTitle');
 const feedbackExplanation = document.getElementById('feedbackExplanation');
 const scoreBreakdownEl = document.getElementById('scoreBreakdown');
+
+// 화면 전환 공통 헬퍼
+function showScreen(screenEl) {
+    allScreens.forEach(s => s.classList.remove('active'));
+    screenEl.classList.add('active');
+}
+
+// ===== 다크모드 =====
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+    if (themeToggleBtn) {
+        themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        themeToggleBtn.setAttribute('aria-pressed', String(theme === 'dark'));
+    }
+}
+
+function initTheme() {
+    const saved = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+    applyTheme(saved);
+}
+
+// ===== 사운드 효과 =====
+let soundEnabled = localStorage.getItem(STORAGE_KEYS.SOUND) !== 'off';
+let audioContext = null;
+
+function updateSoundBtn() {
+    if (!soundToggleBtn) return;
+    soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+    soundToggleBtn.setAttribute('aria-pressed', String(soundEnabled));
+}
+
+function playTone(freq, duration, type = 'sine') {
+    if (!soundEnabled) return;
+    try {
+        if (!audioContext) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioCtx();
+        }
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+        osc.connect(gain).connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + duration);
+    } catch (e) {
+        // 오디오를 지원하지 않는 환경은 무시
+    }
+}
+
+function playCorrectSound() {
+    playTone(880, 0.18);
+    setTimeout(() => playTone(1175, 0.18), 100);
+}
+
+function playIncorrectSound() {
+    playTone(220, 0.25, 'sawtooth');
+}
+
+// ===== 결과 공유 토스트 =====
+function showToast(message) {
+    let toast = document.getElementById('appToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'appToast';
+        toast.className = 'app-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ===== 리더보드 =====
+let leaderboardPeriod = 'allTime';
+
+function renderLeaderboard() {
+    const category = leaderboardCategoryFilter.value || null;
+    const entries = dataManager.getLeaderboard({ period: leaderboardPeriod, category, limit: 10 });
+
+    leaderboardList.innerHTML = '';
+    leaderboardEmpty.hidden = entries.length > 0;
+
+    entries.forEach((entry, idx) => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+
+        const rankSpan = document.createElement('span');
+        rankSpan.className = 'leaderboard-rank';
+        rankSpan.textContent = `#${idx + 1}`;
+
+        const infoSpan = document.createElement('span');
+        infoSpan.className = 'leaderboard-info';
+        const modeLabel = GAME_MODES[entry.mode] ? GAME_MODES[entry.mode].label : entry.mode;
+        const dateStr = new Date(entry.timestamp).toLocaleDateString('ko-KR');
+        infoSpan.textContent = `${modeLabel}${entry.category ? ' · ' + entry.category : ''} · ${dateStr}`;
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.className = 'leaderboard-score';
+        scoreSpan.textContent = `${entry.totalScore}점`;
+
+        li.appendChild(rankSpan);
+        li.appendChild(infoSpan);
+        li.appendChild(scoreSpan);
+        leaderboardList.appendChild(li);
+    });
+}
+
+// ===== 내 통계 =====
+function renderStats() {
+    const history = dataManager.getGameHistory();
+    statsEmpty.hidden = history.length > 0;
+
+    statsPlayCountEl.textContent = dataManager.getPlayCount();
+    statsBestScoreEl.textContent = dataManager.getBestScore();
+    const avgScore = history.length > 0
+        ? Math.round(history.reduce((sum, h) => sum + h.totalScore, 0) / history.length)
+        : 0;
+    statsAvgScoreEl.textContent = avgScore;
+
+    // 카테고리별 정답률
+    const categoryStats = dataManager.getCategoryStats();
+    categoryAccuracyList.innerHTML = '';
+    Object.entries(categoryStats).forEach(([category, s]) => {
+        const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+
+        const row = document.createElement('div');
+        row.className = 'accuracy-row';
+
+        const label = document.createElement('span');
+        label.className = 'accuracy-label';
+        label.textContent = category;
+
+        const track = document.createElement('div');
+        track.className = 'accuracy-bar-track';
+        const fill = document.createElement('div');
+        fill.className = 'accuracy-bar-fill';
+        fill.style.width = `${pct}%`;
+        track.appendChild(fill);
+
+        const pctSpan = document.createElement('span');
+        pctSpan.className = 'accuracy-pct';
+        pctSpan.textContent = `${pct}%`;
+
+        row.appendChild(label);
+        row.appendChild(track);
+        row.appendChild(pctSpan);
+        categoryAccuracyList.appendChild(row);
+    });
+
+    // 최근 점수 추이 (스파크라인)
+    const recentScores = dataManager.getRecentScores(10);
+    scoreTrendChart.innerHTML = '';
+    const maxScore = Math.max(1, ...recentScores);
+    recentScores.forEach(score => {
+        const bar = document.createElement('div');
+        bar.className = 'trend-bar';
+        bar.style.height = `${Math.max(6, Math.round((score / maxScore) * 100))}%`;
+        bar.title = `${score}점`;
+        scoreTrendChart.appendChild(bar);
+    });
+}
 
 // 배열 섞기 (Fisher-Yates)
 function shuffleArray(array) {
@@ -162,9 +357,7 @@ function initGame() {
     gameState.timeRemaining = modeConfig.timeLimit;
 
     // 화면 전환
-    startScreen.classList.remove('active');
-    quizScreen.classList.add('active');
-    resultScreen.classList.remove('active');
+    showScreen(quizScreen);
     feedbackModal.classList.remove('show');
     pauseOverlay.classList.remove('show');
     pauseBtn.textContent = '⏸️';
@@ -356,6 +549,7 @@ function handleAnswer(selectedIndex) {
     });
 
     // UI 피드백
+    if (isCorrect) playCorrectSound(); else playIncorrectSound();
     showAnswerFeedback(selectedIndex, question.correctAnswer, isCorrect);
     updateProgress();
     updateStreakBadge();
@@ -428,8 +622,7 @@ function endGame() {
     clearQuestionTimer();
 
     // 화면 전환
-    quizScreen.classList.remove('active');
-    resultScreen.classList.add('active');
+    showScreen(resultScreen);
 
     // 결과 표시
     displayResults();
@@ -439,20 +632,35 @@ function endGame() {
 function displayResults() {
     const total = gameState.questions.length;
 
+    // 정답률 / 평균 응답 시간 (저장에도 사용)
+    const accuracy = total > 0 ? Math.round((gameState.correctAnswers / total) * 100) : 0;
+    const avgTime = gameState.responseTimes.length > 0
+        ? gameState.responseTimes.reduce((sum, t) => sum + t, 0) / gameState.responseTimes.length
+        : 0;
+
+    // 기록 저장 및 신기록 여부 확인
+    const previousBest = dataManager.getBestScore();
+    dataManager.saveGameResult({
+        mode: gameState.mode,
+        category: gameState.category,
+        totalScore: gameState.score,
+        correctAnswers: gameState.correctAnswers,
+        totalQuestions: total,
+        accuracy: accuracy,
+        avgResponseTime: avgTime,
+        longestStreak: gameState.longestStreak,
+        categoryScores: gameState.categoryScores
+    });
+    if (newBestBadge) newBestBadge.hidden = gameState.score <= previousBest;
+
     // 최종 점수
     document.getElementById('finalScore').textContent = gameState.score;
 
     // 정답 개수
     document.getElementById('correctCount').textContent = `${gameState.correctAnswers} / ${total}`;
 
-    // 정답률
-    const accuracy = total > 0 ? Math.round((gameState.correctAnswers / total) * 100) : 0;
     document.getElementById('accuracyRate').textContent = `${accuracy}%`;
 
-    // 평균 응답 시간
-    const avgTime = gameState.responseTimes.length > 0
-        ? gameState.responseTimes.reduce((sum, t) => sum + t, 0) / gameState.responseTimes.length
-        : 0;
     document.getElementById('avgResponseTime').textContent = `${avgTime.toFixed(1)}초`;
 
     // 최장 연속 정답
@@ -508,8 +716,7 @@ function updateProgress() {
 // 게임 재시작
 function restartGame() {
     clearQuestionTimer();
-    resultScreen.classList.remove('active');
-    startScreen.classList.add('active');
+    showScreen(startScreen);
 }
 
 // 모드 선택
@@ -536,6 +743,61 @@ restartBtn.addEventListener('click', restartGame);
 hintBtn.addEventListener('click', useHint);
 pauseBtn.addEventListener('click', pauseGame);
 resumeBtn.addEventListener('click', resumeGame);
+
+// 다크모드 / 사운드 토글
+themeToggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+soundToggleBtn.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem(STORAGE_KEYS.SOUND, soundEnabled ? 'on' : 'off');
+    updateSoundBtn();
+});
+
+// 리더보드 / 통계 화면
+leaderboardBtn.addEventListener('click', () => {
+    renderLeaderboard();
+    showScreen(leaderboardScreen);
+});
+
+statsBtn.addEventListener('click', () => {
+    renderStats();
+    showScreen(statsScreen);
+});
+
+leaderboardBackBtn.addEventListener('click', () => showScreen(startScreen));
+statsBackBtn.addEventListener('click', () => showScreen(startScreen));
+
+periodFilter.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    periodFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    leaderboardPeriod = btn.dataset.period;
+    renderLeaderboard();
+});
+
+leaderboardCategoryFilter.addEventListener('change', renderLeaderboard);
+
+// 결과 공유
+shareBtn.addEventListener('click', async () => {
+    const total = gameState.questions.length;
+    const accuracy = total > 0 ? Math.round((gameState.correctAnswers / total) * 100) : 0;
+    const text = `🎯 퀴즈 게임 결과\n점수: ${gameState.score}점\n정답: ${gameState.correctAnswers}/${total} (${accuracy}%)\n최장 연속 정답: ${gameState.longestStreak}회`;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('결과가 클립보드에 복사되었습니다!');
+    } catch (e) {
+        showToast('클립보드 복사에 실패했습니다.');
+    }
+});
+
+// 초기화
+initTheme();
+updateSoundBtn();
 
 // 키보드 단축키 지원
 document.addEventListener('keydown', (e) => {
