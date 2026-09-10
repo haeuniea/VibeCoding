@@ -1,18 +1,11 @@
+import asyncio
 import base64
 import json
 import re
-import time
 
-from openai import OpenAI, RateLimitError
+from openai import RateLimitError
 
-from config import OPENROUTER_API_KEY
-
-MODEL = "google/gemma-4-26b-a4b-it:free"
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+from ai_client import MODEL, client
 
 INGREDIENT_PROMPT = (
     '이 사진에 보이는 식재료 이름만 한국어로 JSON 배열로 답해줘. '
@@ -47,13 +40,13 @@ def parse_ingredients(text: str) -> list[str]:
     return cleaned
 
 
-def recognize_ingredients(image_bytes: bytes, content_type: str, max_retries: int = 2) -> list[str]:
+async def recognize_ingredients(image_bytes: bytes, content_type: str, max_retries: int = 2) -> list[str]:
     data_uri = to_data_uri(image_bytes, content_type)
 
     last_error = None
     for attempt in range(max_retries + 1):
         try:
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=MODEL,
                 messages=[
                     {
@@ -69,7 +62,7 @@ def recognize_ingredients(image_bytes: bytes, content_type: str, max_retries: in
         except RateLimitError as e:
             last_error = e
             if attempt < max_retries:
-                time.sleep(5)
+                await asyncio.sleep(5)
                 continue
             raise
     raise last_error

@@ -1,15 +1,6 @@
 import sys
 
-from openai import OpenAI
-
-from config import OPENROUTER_API_KEY
-
-MODEL = "google/gemma-4-26b-a4b-it:free"
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+from ai_client import MODEL, sync_client as client
 
 
 def chat(prompt: str) -> str:

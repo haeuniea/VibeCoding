@@ -8,6 +8,7 @@ from recipe import recommend_recipes
 from vision import recognize_ingredients
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
+IMAGE_READ_CHUNK_BYTES = 1024 * 1024
 
 
 class RecommendRecipesRequest(BaseModel):
@@ -45,13 +46,20 @@ def index():
 
 @app.post("/api/recognize-ingredients")
 async def recognize_ingredients_endpoint(image: UploadFile = File(...)):
-    content = await image.read()
-
-    if len(content) > MAX_IMAGE_BYTES:
-        return JSONResponse(status_code=400, content={"error": "이미지 크기는 10MB 이하여야 합니다."})
+    # 전체를 한 번에 읽지 않고 청크 단위로 읽어, 한도를 넘는 순간 바로 중단한다.
+    # (매우 큰 파일을 통째로 메모리에 올린 뒤 검사하는 낭비를 줄인다.)
+    chunks = bytearray()
+    while True:
+        chunk = await image.read(IMAGE_READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        chunks.extend(chunk)
+        if len(chunks) > MAX_IMAGE_BYTES:
+            return JSONResponse(status_code=400, content={"error": "이미지 크기는 10MB 이하여야 합니다."})
+    content = bytes(chunks)
 
     try:
-        ingredients = recognize_ingredients(content, image.content_type or "image/jpeg")
+        ingredients = await recognize_ingredients(content, image.content_type or "image/jpeg")
     except Exception as e:
         return JSONResponse(
             status_code=502,
@@ -68,7 +76,7 @@ async def recommend_recipes_endpoint(body: RecommendRecipesRequest):
         return JSONResponse(status_code=400, content={"error": "재료 목록이 비어 있습니다."})
 
     try:
-        recipes = recommend_recipes(ingredients)
+        recipes = await recommend_recipes(ingredients)
     except Exception as e:
         return JSONResponse(
             status_code=502,
