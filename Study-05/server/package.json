@@ -1,0 +1,21 @@
+{
+  "name": "study-05-pdf-summarizer-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PDF 업로드/텍스트 추출/AI 요약을 처리하는 로컬 백엔드 서버 (Study-05)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.3.0",
+    "pdfjs-dist": "^6.3.289"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
+  }
+}

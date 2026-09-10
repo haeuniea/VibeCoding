@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PDF 요약 도우미</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --accent: #4f6ef7;
+    --accent-dark: #3a54d1;
+    --text-main: #1f2430;
+    --text-sub: #6b7280;
+    --border-soft: #e3e7f0;
+    --shadow-soft: 0 4px 18px rgba(40, 50, 90, 0.08);
+    --error-bg: #fdecec;
+    --error-text: #b3261e;
+    --error-border: #f3c7c4;
+    --success-bg: #eaf6ee;
+    --success-text: #1e6b3a;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", -apple-system,
+      BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 60px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  header.app-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  header.app-header h1 {
+    font-size: 1.9rem;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  header.app-header p {
+    margin: 0;
+    color: var(--text-sub);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .server-banner {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .server-banner.hidden {
+    display: none;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    padding: 24px 22px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border-soft);
+  }
+
+  .dropzone {
+    border: 2px dashed var(--border-soft);
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    background: #fafbfe;
+  }
+
+  .dropzone:hover {
+    border-color: var(--accent);
+    background: #f2f4ff;
+  }
+
+  .dropzone.dragover {
+    border-color: var(--accent);
+    background: #eef1ff;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
+  }
+
+  .dropzone:focus-visible {
+    outline: 2px solid var(--accent-dark);
+    outline-offset: 3px;
+  }
+
+  .dropzone .dz-icon {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+  }
+
+  .dropzone .dz-title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .dropzone .dz-sub {
+    font-size: 0.85rem;
+    color: var(--text-sub);
+  }
+
+  .dropzone .dz-hint {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--text-sub);
+  }
+
+  #file-input {
+    /* 시각적으로는 숨기되 스크린리더/키보드 접근성은 유지 */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .form-message {
+    margin-top: 12px;
+    font-size: 0.86rem;
+    color: var(--error-text);
+    min-height: 1.2em;
+    text-align: center;
+  }
+
+  .status-area {
+    text-align: center;
+    padding: 28px 10px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid var(--border-soft);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .status-area p {
+    margin: 0;
+    color: var(--text-sub);
+    font-size: 0.92rem;
+  }
+
+  .result-card h2 {
+    margin: 0 0 14px;
+    font-size: 1.15rem;
+  }
+
+  .result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .result-meta span {
+    background: #f0f2fb;
+    color: var(--text-sub);
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .truncated-notice {
+    background: #fff6e5;
+    color: #8a6100;
+    border: 1px solid #f3dfa9;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+
+  .result-summary {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 18px;
+  }
+
+  .result-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  button.secondary-btn {
+    background: #eef1ff;
+    color: var(--accent-dark);
+    border: none;
+    border-radius: 999px;
+    padding: 9px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button.secondary-btn:hover {
+    background: #dfe4ff;
+  }
+
+  button.secondary-btn:focus-visible {
+    outline: 2px solid var(--accent-dark);
+    outline-offset: 2px;
+  }
+
+  .error-card {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .error-card p {
+    margin: 0 0 16px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  button.retry-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  button.retry-btn:hover {
+    background: var(--accent-dark);
+  }
+
+  button.retry-btn:active {
+    transform: scale(0.97);
+  }
+
+  button.retry-btn:focus-visible {
+    outline: 2px solid var(--error-text);
+    outline-offset: 2px;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  footer.app-footer {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>PDF 요약 도우미</h1>
+      <p>PDF 문서를 올리면 AI가 핵심 내용을 한국어로 요약해드려요.<br />PDF 전용 &middot; 최대 10MB</p>
+    </header>
+
+    <div class="server-banner hidden" id="server-banner" role="alert">
+      로컬 서버에 연결할 수 없습니다. <code>cd Study-05/server</code> 후 <code>npm start</code>로 서버를 먼저 실행해주세요.
+    </div>
+
+    <section class="card" id="upload-section">
+      <form id="upload-form" novalidate>
+        <div
+          class="dropzone"
+          id="dropzone"
+          role="button"
+          tabindex="0"
+          aria-describedby="dz-desc"
+        >
+          <div class="dz-icon" aria-hidden="true">📄</div>
+          <div class="dz-title">PDF 파일을 여기로 끌어다 놓으세요</div>
+          <div class="dz-sub" id="dz-desc">또는 클릭(엔터/스페이스)해서 파일을 선택하세요</div>
+          <div class="dz-hint">PDF 파일만 가능 &middot; 최대 10MB</div>
+          <input type="file" id="file-input" accept=".pdf,application/pdf" aria-label="PDF 파일 선택" />
+        </div>
+        <p class="form-message" id="form-message" role="alert"></p>
+      </form>
+    </section>
+
+    <section aria-live="polite">
+      <div class="card status-area hidden" id="status-area">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="status-text">PDF를 업로드하고 있어요...</p>
+      </div>
+
+      <div class="card result-card hidden" id="result-card">
+        <h2>요약 결과</h2>
+        <div class="result-meta" id="result-meta"></div>
+        <div class="truncated-notice hidden" id="truncated-notice">
+          문서가 길어 일부만 요약했습니다.
+        </div>
+        <p class="result-summary" id="result-summary"></p>
+        <div class="result-actions">
+          <button type="button" class="secondary-btn" id="new-upload-btn">다른 파일 요약하기</button>
+        </div>
+      </div>
+
+      <div class="card error-card hidden" id="error-card">
+        <p id="error-message"></p>
+        <button type="button" class="retry-btn" id="retry-btn">다시 시도</button>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <p>이 도구는 로컬에서만 동작합니다. 업로드된 파일은 서버에 저장되지 않습니다.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const API_BASE = "http://localhost:3000";
+      const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+      const ALLOWED_MIME_TYPE = "application/pdf";
+
+      // ------------------------------------------------------------------
+      // DOM 참조
+      // ------------------------------------------------------------------
+      const serverBanner = document.getElementById("server-banner");
+
+      const uploadSection = document.getElementById("upload-section");
+      const uploadForm = document.getElementById("upload-form");
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("file-input");
+      const formMessage = document.getElementById("form-message");
+
+      const statusArea = document.getElementById("status-area");
+      const statusText = document.getElementById("status-text");
+
+      const resultCard = document.getElementById("result-card");
+      const resultMeta = document.getElementById("result-meta");
+      const truncatedNotice = document.getElementById("truncated-notice");
+      const resultSummary = document.getElementById("result-summary");
+      const newUploadBtn = document.getElementById("new-upload-btn");
+
+      const errorCard = document.getElementById("error-card");
+      const errorMessage = document.getElementById("error-message");
+      const retryBtn = document.getElementById("retry-btn");
+
+      let lastSelectedFile = null;
+      let serverAvailable = null; // null = 아직 확인 전
+
+      // ------------------------------------------------------------------
+      // 에러 코드 → 한국어 메시지 매핑 (서버 기본 메시지와 별개로 프론트 자체 문구도 준비)
+      // ------------------------------------------------------------------
+      const ERROR_MESSAGES = {
+        NO_FILE: "PDF 파일을 첨부해주세요.",
+        INVALID_FILE_TYPE: "PDF 파일만 업로드할 수 있습니다.",
+        FILE_TOO_LARGE: "파일 크기가 10MB를 초과합니다.",
+        EXTRACTION_FAILED: "PDF 파일을 읽는 중 오류가 발생했습니다. 파일이 손상되지 않았는지 확인해주세요.",
+        EXTRACTION_EMPTY: "이 PDF에서는 텍스트를 추출할 수 없습니다 (이미지 스캔본일 수 있음).",
+        OPENROUTER_AUTH_ERROR: "AI 요약 서비스 인증에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        OPENROUTER_RATE_LIMITED: "일시적으로 요청이 많습니다. 잠시 후 다시 시도해주세요.",
+        OPENROUTER_TIMEOUT: "AI 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
+        OPENROUTER_ERROR: "AI 요약 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        INTERNAL_ERROR: "서버에서 알 수 없는 오류가 발생했습니다.",
+      };
+
+      function formatBytes(bytes) {
+        if (typeof bytes !== "number" || isNaN(bytes)) return "";
+        if (bytes < 1024) return `${bytes} B`;
+        const kb = bytes / 1024;
+        if (kb < 1024) return `${kb.toFixed(1)} KB`;
+        return `${(kb / 1024).toFixed(2)} MB`;
+      }
+
+      // ------------------------------------------------------------------
+      // 상태 전환
+      // ------------------------------------------------------------------
+      function showIdle() {
+        uploadSection.classList.remove("hidden");
+        statusArea.classList.add("hidden");
+        resultCard.classList.add("hidden");
+        errorCard.classList.add("hidden");
+        clearFormMessage();
+      }
+
+      function showStatus(text) {
+        uploadSection.classList.add("hidden");
+        statusArea.classList.remove("hidden");
+        resultCard.classList.add("hidden");
+        errorCard.classList.add("hidden");
+        statusText.textContent = text || "처리 중입니다...";
+      }
+
+      function showResult(data) {
+        uploadSection.classList.add("hidden");
+        statusArea.classList.add("hidden");
+        errorCard.classList.add("hidden");
+        resultCard.classList.remove("hidden");
+
+        resultMeta.textContent = "";
+        const metaItems = [
+          data.fileName,
+          typeof data.pageCount === "number" ? `${data.pageCount}페이지` : null,
+          typeof data.fileSizeBytes === "number" ? formatBytes(data.fileSizeBytes) : null,
+          data.model ? `모델: ${data.model}` : null,
+        ].filter(Boolean);
+        metaItems.forEach((text) => {
+          const span = document.createElement("span");
+          span.textContent = text;
+          resultMeta.appendChild(span);
+        });
+
+        if (data.truncated) {
+          truncatedNotice.classList.remove("hidden");
+        } else {
+          truncatedNotice.classList.add("hidden");
+        }
+
+        resultSummary.textContent = data.summary || "";
+      }
+
+      function showError(message) {
+        uploadSection.classList.add("hidden");
+        statusArea.classList.add("hidden");
+        resultCard.classList.add("hidden");
+        errorCard.classList.remove("hidden");
+        errorMessage.textContent = message;
+        retryBtn.focus();
+      }
+
+      function clearFormMessage() {
+        formMessage.textContent = "";
+      }
+
+      // ------------------------------------------------------------------
+      // 서버 헬스체크
+      // ------------------------------------------------------------------
+      async function checkServerHealth() {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          let response;
+          try {
+            response = await fetch(`${API_BASE}/api/health`, { signal: controller.signal });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+          serverAvailable = response.ok;
+        } catch (err) {
+          serverAvailable = false;
+        }
+        serverBanner.classList.toggle("hidden", serverAvailable);
+        return serverAvailable;
+      }
+
+      // ------------------------------------------------------------------
+      // 클라이언트 사전 검증
+      // ------------------------------------------------------------------
+      function validateFile(file) {
+        if (!file) {
+          return "PDF 파일을 첨부해주세요.";
+        }
+        const isPdfType =
+          file.type === ALLOWED_MIME_TYPE || /\.pdf$/i.test(file.name || "");
+        if (!isPdfType) {
+          return "PDF 파일만 업로드할 수 있습니다.";
+        }
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          return "파일 크기가 10MB를 초과합니다.";
+        }
+        return null;
+      }
+
+      // ------------------------------------------------------------------
+      // 업로드 + 요약 요청
+      // ------------------------------------------------------------------
+      async function submitFile(file) {
+        clearFormMessage();
+        const validationError = validateFile(file);
+        if (validationError) {
+          formMessage.textContent = validationError;
+          return;
+        }
+
+        lastSelectedFile = file;
+        showStatus("PDF를 업로드하고 텍스트를 추출하고 있어요...");
+
+        const healthy = await checkServerHealth();
+        if (!healthy) {
+          showError("서버에 연결할 수 없습니다. 로컬 서버를 먼저 실행해주세요. (cd Study-05/server && npm start)");
+          return;
+        }
+
+        // 텍스트 추출 이후 단계는 서버가 별도 진행률을 주지 않으므로 잠시 후 문구를 전환해 체감 대기를 완화한다.
+        const advanceMessageTimer = setTimeout(() => {
+          statusText.textContent = "AI가 요약을 작성하고 있어요... (최대 1분 정도 걸릴 수 있어요)";
+        }, 2500);
+
+        try {
+          const formData = new FormData();
+          formData.append("pdf", file, file.name);
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 70000);
+
+          let response;
+          try {
+            response = await fetch(`${API_BASE}/api/summarize`, {
+              method: "POST",
+              body: formData,
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+
+          let payload;
+          try {
+            payload = await response.json();
+          } catch (err) {
+            throw new Error("서버 응답을 해석할 수 없습니다.");
+          }
+
+          if (!response.ok || !payload || payload.success !== true) {
+            const code = payload && payload.error && payload.error.code;
+            const serverMessage = payload && payload.error && payload.error.message;
+            const message =
+              (code && ERROR_MESSAGES[code]) ||
+              serverMessage ||
+              "요약 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            showError(message);
+            return;
+          }
+
+          serverBanner.classList.add("hidden");
+          showResult(payload.data);
+        } catch (err) {
+          if (err && err.name === "AbortError") {
+            showError("응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.");
+            return;
+          }
+          showError("서버에 연결할 수 없습니다. 로컬 서버를 먼저 실행해주세요. (cd Study-05/server && npm start)");
+        } finally {
+          clearTimeout(advanceMessageTimer);
+        }
+      }
+
+      // ------------------------------------------------------------------
+      // 이벤트 바인딩
+      // ------------------------------------------------------------------
+      dropzone.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      dropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (file) {
+          submitFile(file);
+        }
+        fileInput.value = "";
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+
+      ["dragleave", "dragend"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+
+      dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropzone.classList.remove("dragover");
+        const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file) {
+          submitFile(file);
+        }
+      });
+
+      newUploadBtn.addEventListener("click", () => {
+        showIdle();
+      });
+
+      retryBtn.addEventListener("click", () => {
+        if (lastSelectedFile) {
+          submitFile(lastSelectedFile);
+        } else {
+          showIdle();
+        }
+      });
+
+      // ------------------------------------------------------------------
+      // 초기화
+      // ------------------------------------------------------------------
+      showIdle();
+      checkServerHealth();
+    })();
+  </script>
+</body>
+</html>
