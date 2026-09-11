@@ -2,6 +2,10 @@
 
 서버 없이 브라우저에서 바로 실행되는 간단한 쇼핑 리스트 웹앱입니다. 데이터는 Supabase 데이터베이스에 저장됩니다.
 
+![쇼핑 리스트 스크린샷](screenshot.png)
+
+배포: https://shopping-listapp-ivory-xi.vercel.app/
+
 ## 기능
 
 - 아이템 이름 + 수량 입력 후 추가
