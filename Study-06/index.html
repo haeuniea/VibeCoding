@@ -180,6 +180,13 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }
 
+  function generateId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
   let items = loadItems();
 
   function render() {
@@ -229,7 +236,7 @@
     if (!name) return;
 
     items.push({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+      id: generateId(),
       name,
       qty,
       checked: false,
