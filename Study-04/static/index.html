@@ -21,6 +21,10 @@
     --shadow: 0 1px 2px rgba(43,36,32,0.04), 0 8px 24px rgba(43,36,32,0.06);
   }
   * { box-sizing: border-box; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
     background: var(--bg);
@@ -84,6 +88,8 @@
     transition: border-color 0.15s, background 0.15s; font-size: 14px;
   }
   #dropzone:hover, #dropzone.drag { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  #dropzone:focus-visible, #dropzone:focus { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+  #dropzone small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
   #preview { max-width: 100%; max-height: 220px; display: none; margin-bottom: 12px; border-radius: 10px; }
 
   #status, #recipe-status { margin: 10px 0; color: var(--muted); font-size: 14px; min-height: 1.2em; }
@@ -141,13 +147,15 @@
 
   <div class="card" id="auth-section">
     <div id="auth-logged-out">
-      <input type="email" id="auth-email" placeholder="이메일">
-      <input type="password" id="auth-password" placeholder="비밀번호">
+      <label for="auth-email" class="sr-only">이메일</label>
+      <input type="email" id="auth-email" placeholder="이메일" autocomplete="email">
+      <label for="auth-password" class="sr-only">비밀번호</label>
+      <input type="password" id="auth-password" placeholder="비밀번호" autocomplete="current-password">
       <div class="auth-row">
         <button id="login-btn">로그인</button>
         <button id="signup-btn" class="secondary">회원가입</button>
       </div>
-      <div id="auth-error"></div>
+      <div id="auth-error" role="alert"></div>
     </div>
     <div id="auth-logged-in" style="display:none">
       <span id="auth-current-email"></span>
@@ -158,25 +166,35 @@
   <div class="card">
     <div class="step-header"><span class="step-badge">1</span><h2>냉장고 사진으로 재료 인식하기</h2></div>
 
-    <div id="dropzone">📷 사진을 클릭하거나 여기로 드래그하세요</div>
+    <div id="dropzone" tabindex="0" role="button" aria-label="냉장고 사진 업로드하기. 클릭하거나 Enter 또는 Space 키를 눌러 파일을 선택하세요. 이미지 파일, 최대 10MB.">
+      📷 사진을 클릭하거나 여기로 드래그하세요
+      <small>이미지 파일 (JPG, PNG 등), 최대 10MB</small>
+    </div>
     <input type="file" id="file-input" accept="image/*" style="display:none">
-    <img id="preview" alt="미리보기">
+    <img id="preview" alt="업로드한 냉장고 사진 미리보기">
 
-    <button id="recognize-btn" disabled>재료 인식하기</button>
+    <div class="auth-row">
+      <button id="recognize-btn" disabled>재료 인식하기</button>
+      <button id="recognize-cancel-btn" class="secondary" type="button" style="display:none">취소</button>
+    </div>
 
-    <div id="status"></div>
-    <div id="error"></div>
+    <div id="status" aria-live="polite"></div>
+    <div id="error" role="alert"></div>
 
     <ul id="ingredients"></ul>
+    <label for="add-ingredient" class="sr-only">재료 직접 추가</label>
     <input type="text" id="add-ingredient" placeholder="재료 직접 추가 후 Enter">
   </div>
 
   <div class="card">
     <div class="step-header"><span class="step-badge">2</span><h2>레시피 추천</h2></div>
 
-    <button id="recommend-btn" disabled>레시피 추천받기</button>
-    <div id="recipe-status"></div>
-    <div id="recipe-error"></div>
+    <div class="auth-row">
+      <button id="recommend-btn" disabled>레시피 추천받기</button>
+      <button id="recommend-cancel-btn" class="secondary" type="button" style="display:none">취소</button>
+    </div>
+    <div id="recipe-status" aria-live="polite"></div>
+    <div id="recipe-error" role="alert"></div>
 
     <div id="recipe-list"></div>
 
@@ -209,17 +227,66 @@
     const addIngredientInput = document.getElementById('add-ingredient');
 
     let selectedFile = null;
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, 서버 제한과 동일
+
+    // 알려진 기술적 오류 패턴을 사용자 친화적인 한국어 안내로 변환한다.
+    // 원본 메시지는 항상 console.error로만 남긴다.
+    function mapErrorMessage(message) {
+      const text = String(message || '');
+      if (/429/.test(text) || /rate ?limit/i.test(text)) {
+        return '요청이 많아 일시적으로 지연되고 있어요. 잠시 후 다시 시도해주세요.';
+      }
+      if (/\b5\d{2}\b/.test(text) || /internal server error/i.test(text)) {
+        return '서버에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      }
+      if (/timed? ?out/i.test(text)) {
+        return '요청 시간이 초과되었습니다. 네트워크 상태를 확인 후 다시 시도해주세요.';
+      }
+      if (/failed to fetch|networkerror|network error/i.test(text)) {
+        return '네트워크 연결을 확인해주세요.';
+      }
+      // 이미 한국어로 된 짧은 안내 메시지는 그대로 보여준다.
+      if (text && /^[가-힣0-9\s.,!?~()'"%-]+$/.test(text) && text.length < 100) {
+        return text;
+      }
+      return '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    }
+
+    function isImageFile(file) {
+      return !!file && !!file.type && file.type.startsWith('image/');
+    }
+
+    function validateAndSetFile(file) {
+      if (!file) return;
+      if (!isImageFile(file)) {
+        errorEl.textContent = '이미지 파일만 업로드할 수 있어요. (JPG, PNG 등)';
+        statusEl.textContent = '';
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        errorEl.textContent = '파일 크기가 너무 커요. 10MB 이하의 이미지를 사용해주세요.';
+        statusEl.textContent = '';
+        return;
+      }
+      setFile(file);
+    }
 
     dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropzone.classList.remove('drag');
-      if (e.dataTransfer.files.length > 0) setFile(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files.length > 0) validateAndSetFile(e.dataTransfer.files[0]);
     });
     fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) setFile(fileInput.files[0]);
+      if (fileInput.files.length > 0) validateAndSetFile(fileInput.files[0]);
     });
 
     function setFile(file) {
@@ -258,17 +325,31 @@
       }
     });
 
+    const recognizeCancelBtn = document.getElementById('recognize-cancel-btn');
+    let recognizeController = null;
+    let recognizeSlowTimer = null;
+
     recognizeBtn.addEventListener('click', async () => {
       if (!selectedFile) return;
       errorEl.textContent = '';
       statusEl.textContent = '인식하는 중...';
       recognizeBtn.disabled = true;
+      recognizeCancelBtn.style.display = 'inline-block';
+
+      recognizeController = new AbortController();
+      recognizeSlowTimer = setTimeout(() => {
+        statusEl.textContent = '예상보다 오래 걸리고 있어요. 계속 기다리거나 취소 후 다시 시도해주세요.';
+      }, 12000);
 
       const formData = new FormData();
       formData.append('image', selectedFile);
 
       try {
-        const res = await fetch('/api/recognize-ingredients', { method: 'POST', body: formData });
+        const res = await fetch('/api/recognize-ingredients', {
+          method: 'POST',
+          body: formData,
+          signal: recognizeController.signal,
+        });
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error || '인식에 실패했습니다.');
@@ -281,11 +362,23 @@
         }
         renderIngredients(currentIngredients);
       } catch (err) {
-        errorEl.textContent = err.message;
-        statusEl.textContent = '';
+        if (err.name === 'AbortError') {
+          statusEl.textContent = '요청을 취소했어요.';
+        } else {
+          console.error('재료 인식 오류:', err);
+          errorEl.textContent = mapErrorMessage(err.message);
+          statusEl.textContent = '';
+        }
       } finally {
+        clearTimeout(recognizeSlowTimer);
+        recognizeCancelBtn.style.display = 'none';
         recognizeBtn.disabled = false;
+        recognizeController = null;
       }
+    });
+
+    recognizeCancelBtn.addEventListener('click', () => {
+      if (recognizeController) recognizeController.abort();
     });
 
     const recommendBtn = document.getElementById('recommend-btn');
@@ -335,19 +428,30 @@
       recipeListEl.style.display = 'block';
     });
 
+    const recommendCancelBtn = document.getElementById('recommend-cancel-btn');
+    let recommendController = null;
+    let recommendSlowTimer = null;
+
     recommendBtn.addEventListener('click', async () => {
       if (currentIngredients.length === 0) return;
       recipeErrorEl.textContent = '';
       recipeStatusEl.textContent = '레시피를 만드는 중...';
       recommendBtn.disabled = true;
+      recommendCancelBtn.style.display = 'inline-block';
       recipeListEl.innerHTML = '';
       recipeDetailEl.style.display = 'none';
+
+      recommendController = new AbortController();
+      recommendSlowTimer = setTimeout(() => {
+        recipeStatusEl.textContent = '예상보다 오래 걸리고 있어요. 계속 기다리거나 취소 후 다시 시도해주세요.';
+      }, 12000);
 
       try {
         const res = await fetch('/api/recommend-recipes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ingredients: currentIngredients }),
+          signal: recommendController.signal,
         });
         const data = await res.json();
         if (!res.ok) {
@@ -361,11 +465,23 @@
         }
         renderRecipeCards(currentRecipes);
       } catch (err) {
-        recipeErrorEl.textContent = err.message;
-        recipeStatusEl.textContent = '';
+        if (err.name === 'AbortError') {
+          recipeStatusEl.textContent = '요청을 취소했어요.';
+        } else {
+          console.error('레시피 추천 오류:', err);
+          recipeErrorEl.textContent = mapErrorMessage(err.message);
+          recipeStatusEl.textContent = '';
+        }
       } finally {
+        clearTimeout(recommendSlowTimer);
+        recommendCancelBtn.style.display = 'none';
         recommendBtn.disabled = currentIngredients.length === 0;
+        recommendController = null;
       }
+    });
+
+    recommendCancelBtn.addEventListener('click', () => {
+      if (recommendController) recommendController.abort();
     });
 
     // --- 인증 (3단계) ---
@@ -437,7 +553,8 @@
           authErrorEl.textContent = '가입 완료! 이제 로그인해주세요.';
         }
       } catch (err) {
-        authErrorEl.textContent = err.message;
+        console.error('인증 오류:', err);
+        authErrorEl.textContent = mapErrorMessage(err.message);
       }
     }
 
@@ -466,7 +583,8 @@
         saveStatusEl.textContent = '저장했어요!';
         loadSavedRecipes();
       } catch (err) {
-        saveStatusEl.textContent = err.message;
+        console.error('레시피 저장 오류:', err);
+        saveStatusEl.textContent = mapErrorMessage(err.message);
       }
     });
 
@@ -481,7 +599,8 @@
         if (!res.ok) throw new Error(data.error || '목록을 불러오지 못했습니다.');
         renderSavedRecipes(data.saved_recipes || []);
       } catch (err) {
-        savedRecipesListEl.textContent = err.message;
+        console.error('저장 목록 조회 오류:', err);
+        savedRecipesListEl.textContent = mapErrorMessage(err.message);
       }
     }
 
@@ -502,12 +621,23 @@
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '삭제';
         deleteBtn.onclick = async () => {
+          const confirmed = window.confirm(`"${recipe.title}" 레시피를 삭제할까요?\n삭제하면 되돌릴 수 없어요.`);
+          if (!confirmed) return;
           const token = getToken();
-          await fetch(`/api/recipes/saved/${recipe.id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
-          loadSavedRecipes();
+          try {
+            const res = await fetch(`/api/recipes/saved/${recipe.id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || '삭제에 실패했습니다.');
+            }
+            loadSavedRecipes();
+          } catch (err) {
+            console.error('레시피 삭제 오류:', err);
+            alert(mapErrorMessage(err.message));
+          }
         };
         item.appendChild(title);
         item.appendChild(deleteBtn);

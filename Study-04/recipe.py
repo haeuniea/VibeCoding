@@ -1,17 +1,10 @@
+import asyncio
 import json
 import re
-import time
 
-from openai import OpenAI, RateLimitError
+from openai import RateLimitError
 
-from config import OPENROUTER_API_KEY
-
-MODEL = "google/gemma-4-26b-a4b-it:free"
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+from ai_client import MODEL, client
 
 
 def build_recipe_prompt(ingredients: list[str]) -> str:
@@ -59,13 +52,13 @@ def parse_recipes(text: str) -> list[dict]:
     return recipes
 
 
-def recommend_recipes(ingredients: list[str], max_retries: int = 2) -> list[dict]:
+async def recommend_recipes(ingredients: list[str], max_retries: int = 2) -> list[dict]:
     prompt = build_recipe_prompt(ingredients)
 
     last_error = None
     for attempt in range(max_retries + 1):
         try:
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=MODEL,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -73,7 +66,7 @@ def recommend_recipes(ingredients: list[str], max_retries: int = 2) -> list[dict
         except RateLimitError as e:
             last_error = e
             if attempt < max_retries:
-                time.sleep(5)
+                await asyncio.sleep(5)
                 continue
             raise
     raise last_error

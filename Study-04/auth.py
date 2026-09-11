@@ -111,6 +111,13 @@ def get_user_id_from_token(token: str) -> int | None:
 
 
 def save_recipe(user_id: int, recipe: dict) -> dict:
+    title = recipe.get("title", "")
+    used_ingredients = recipe.get("used_ingredients", [])
+    missing_ingredients = recipe.get("missing_ingredients", [])
+    steps = recipe.get("steps", [])
+    estimated_time_minutes = recipe.get("estimated_time_minutes")
+    created_at = _now()
+
     with get_db() as conn:
         cursor = conn.execute(
             """
@@ -120,16 +127,26 @@ def save_recipe(user_id: int, recipe: dict) -> dict:
             """,
             (
                 user_id,
-                recipe.get("title", ""),
-                json.dumps(recipe.get("used_ingredients", []), ensure_ascii=False),
-                json.dumps(recipe.get("missing_ingredients", []), ensure_ascii=False),
-                json.dumps(recipe.get("steps", []), ensure_ascii=False),
-                recipe.get("estimated_time_minutes"),
-                _now(),
+                title,
+                json.dumps(used_ingredients, ensure_ascii=False),
+                json.dumps(missing_ingredients, ensure_ascii=False),
+                json.dumps(steps, ensure_ascii=False),
+                estimated_time_minutes,
+                created_at,
             ),
         )
         saved_id = cursor.lastrowid
-    return get_saved_recipe(user_id, saved_id)
+
+    # 방금 넣은 값을 그대로 알고 있으므로, 재조회용 커넥션을 한 번 더 열 필요가 없다.
+    return {
+        "id": saved_id,
+        "title": title,
+        "used_ingredients": used_ingredients,
+        "missing_ingredients": missing_ingredients,
+        "steps": steps,
+        "estimated_time_minutes": estimated_time_minutes,
+        "created_at": created_at,
+    }
 
 
 def _row_to_recipe(row: sqlite3.Row) -> dict:
