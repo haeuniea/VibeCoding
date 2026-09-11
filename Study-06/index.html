@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>쇼핑 리스트</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card: #ffffff;
+    --text: #2b2b2b;
+    --muted: #9a9a9a;
+    --accent: #ff8a5b;
+    --accent-dark: #e8703f;
+    --border: #ececec;
+    --danger: #e15252;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 16px;
+    text-align: center;
+  }
+
+  .add-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .add-form input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .add-form input[type="number"] {
+    width: 64px;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .add-form button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .add-form button:hover {
+    background: var(--accent-dark);
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .item .name {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .item .qty {
+    color: var(--muted);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .item.checked .name,
+  .item.checked .qty {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .item.checked {
+    opacity: 0.7;
+  }
+
+  .item .delete-btn {
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 4px 6px;
+    line-height: 1;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 32px 0;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>🛒 쇼핑 리스트</h1>
+    <form class="add-form" id="add-form">
+      <input type="text" id="name-input" placeholder="아이템 이름" autocomplete="off" required>
+      <input type="number" id="qty-input" placeholder="수량" min="1" value="1" required>
+      <button type="submit">추가</button>
+    </form>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty-message" hidden>목록이 비어 있습니다.</p>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'shopping-list-items';
+
+  const form = document.getElementById('add-form');
+  const nameInput = document.getElementById('name-input');
+  const qtyInput = document.getElementById('qty-input');
+  const list = document.getElementById('list');
+  const emptyMessage = document.getElementById('empty-message');
+
+  function loadItems() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveItems(items) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+
+  let items = loadItems();
+
+  function render() {
+    list.innerHTML = '';
+    emptyMessage.hidden = items.length > 0;
+
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'item' + (item.checked ? ' checked' : '');
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = item.checked;
+      checkbox.addEventListener('change', () => {
+        item.checked = checkbox.checked;
+        saveItems(items);
+        render();
+      });
+
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = item.name;
+
+      const qty = document.createElement('span');
+      qty.className = 'qty';
+      qty.textContent = `x${item.qty}`;
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.textContent = '✕';
+      deleteBtn.setAttribute('aria-label', '삭제');
+      deleteBtn.addEventListener('click', () => {
+        items = items.filter(i => i.id !== item.id);
+        saveItems(items);
+        render();
+      });
+
+      li.append(checkbox, name, qty, deleteBtn);
+      list.appendChild(li);
+    });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const qty = parseInt(qtyInput.value, 10) || 1;
+    if (!name) return;
+
+    items.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+      name,
+      qty,
+      checked: false,
+    });
+
+    saveItems(items);
+    render();
+
+    nameInput.value = '';
+    qtyInput.value = '1';
+    nameInput.focus();
+  });
+
+  render();
+</script>
+</body>
+</html>
