@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 서버 없이 브라우저에서 바로 실행되는 쇼핑 리스트 웹앱. 아이템 이름/수량 입력, 체크(완료 표시), 삭제 기능을 제공하며 데이터는 Supabase `shopping_items` 테이블에 저장된다.
 
-이 폴더는 `index.html` 단일 파일로 구성되어 있고, 동일한 내용이 별도 배포 전용 레포 [`haeuniea/shopping-listapp`](https://github.com/haeuniea/shopping-listapp)에도 복사되어 Vercel(https://shopping-listapp-ivory-xi.vercel.app/)에 배포된다. **`index.html`을 수정했다면 `shopping-listapp` 레포의 `index.html`/`README.md`에도 동일하게 반영하고 main에 push해야 실제 배포에 반영된다** (이 레포는 별도 git remote이며 VibeCoding과 브랜치/PR 워크플로가 다르다 — main에 직접 push).
+이 폴더는 `index.html` 단일 파일로 구성되어 있고, 동일한 내용이 별도 배포 전용 레포 [`haeuniea/shopping-listapp`](https://github.com/haeuniea/shopping-listapp)에도 복사되어 Vercel(https://shopping-listapp-tau-lyart.vercel.app/)에 배포된다. **`index.html`을 수정했다면 `shopping-listapp` 레포의 `index.html`/`README.md`에도 동일하게 반영하고 main에 push해야 실제 배포에 반영된다** (이 레포는 별도 git remote이며 VibeCoding과 브랜치/PR 워크플로가 다르다 — main에 직접 push).
 
 ## 아키텍처
 
