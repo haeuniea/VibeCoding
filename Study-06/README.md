@@ -4,7 +4,7 @@
 
 ![쇼핑 리스트 스크린샷](screenshot.png)
 
-배포: https://shopping-listapp-ivory-xi.vercel.app/
+배포: https://shopping-listapp-tau-lyart.vercel.app/
 
 ## 기능
 
